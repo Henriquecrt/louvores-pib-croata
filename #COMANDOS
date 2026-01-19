@@ -1,0 +1,12 @@
+#SO alvar o código no GitHub:
+
+#Bsh
+npm run github
+Atualizar o site na internet (Firebase):
+
+Bash
+npm run deploy
+O COMBO TOTAL (Salvar no GitHub + Atualizar o Site):
+
+Bash
+npm run tudo

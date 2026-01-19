@@ -9,7 +9,7 @@ export interface Song {
   key?: string; 
   lyrics: string;
   tags?: string;
-  views?: number; // Contador de usos
+  views?: number;
   youtubeUrl?: string;
   createdAt?: any;
 }
@@ -20,7 +20,7 @@ export interface Culto {
   date: string;
   leader?: string;
   songIds: string[];
-  vocals?: string[];
+  vocals?: string[]; // Lista de quem vai cantar
 }
 
 @Injectable({
@@ -29,6 +29,17 @@ export interface Culto {
 export class SongService {
   readonly songs = signal<Song[]>([]);
   readonly cultos = signal<Culto[]>([]);
+
+  // --- LISTA FIXA DO VOCAL (Edite aqui para adicionar mais meninas) ---
+  readonly vocalTeam = signal<string[]>([
+    'Ana Laura',
+    'Aparecida',
+    'Rebeca',
+    'Coral MCM',
+    'Sophia',
+    'Samantha',
+    'Linéia'
+  ]);
 
   constructor() {
     this.listenToSongs();
@@ -41,7 +52,6 @@ export class SongService {
     onSnapshot(songsCollection, (snapshot) => {
       const songsData: Song[] = [];
       snapshot.forEach((doc) => songsData.push({ id: doc.id, ...doc.data() } as Song));
-      // Ordena alfabeticamente por padrão
       this.songs.set(songsData.sort((a, b) => a.title.localeCompare(b.title)));
     });
   }
@@ -68,8 +78,14 @@ export class SongService {
     });
   }
 
+  // Atualizado para aceitar 'vocals' na criação
   async addCulto(culto: Omit<Culto, 'id' | 'songIds'>) {
-    await addDoc(collection(db, 'cultos'), { ...culto, songIds: [], vocals: [], createdAt: new Date() });
+    await addDoc(collection(db, 'cultos'), { 
+      ...culto, 
+      songIds: [], 
+      vocals: culto.vocals || [], // Salva as meninas selecionadas
+      createdAt: new Date() 
+    });
   }
 
   async updateCulto(id: string, data: Partial<Culto>) {
@@ -82,16 +98,12 @@ export class SongService {
 
   // --- CONTAGEM INTELIGENTE ---
   async addSongToCulto(cultoId: string, songId: string) {
-    // 1. Adiciona a música no culto
     await updateDoc(doc(db, 'cultos', cultoId), { songIds: arrayUnion(songId) });
-    // 2. Aumenta +1 na contagem da música (increment)
     await updateDoc(doc(db, 'songs', songId), { views: increment(1) });
   }
 
   async removeSongFromCulto(cultoId: string, songId: string) {
-    // 1. Remove a música do culto
     await updateDoc(doc(db, 'cultos', cultoId), { songIds: arrayRemove(songId) });
-    // 2. Diminui -1 na contagem (para não ficar errado se você remover sem querer)
     await updateDoc(doc(db, 'songs', songId), { views: increment(-1) });
   }
 
