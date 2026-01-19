@@ -7,7 +7,9 @@
     "dev": "ng serve",
     "build": "ng build",
     "preview": "ng serve --configuration=production",
-    "deploy": "ng build && firebase deploy"
+    "deploy": "ng build && firebase deploy",
+    "github": "git add . && git commit -m \"Backup automatico\" && git push",
+    "tudo": "npm run github && npm run deploy"
   },
   "dependencies": {
     "@angular/build": "^21.0.0",
