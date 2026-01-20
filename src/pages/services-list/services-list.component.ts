@@ -156,7 +156,12 @@ import { AuthService } from '../../services/auth.service';
                         <li class="pl-1">
                           <span class="font-medium text-base">{{ song.title }}</span>
                           @if(song.key) { <span class="text-xs border border-black px-1 rounded ml-1 align-middle">{{ song.key }}</span> }
-                          @if (song.youtubeUrl) { <div class="text-[10px] text-gray-500 mt-0.5 ml-4 break-all">▶️ {{ song.youtubeUrl }}</div> }
+                          
+                          @if (song.youtubeUrl) { 
+                            <div class="text-[10px] text-gray-500 mt-0.5 ml-4 break-all">
+                              ▶️ <a [href]="song.youtubeUrl" target="_blank" class="text-blue-600 underline hover:text-blue-800">{{ song.youtubeUrl }}</a>
+                            </div> 
+                          }
                         </li>
                       }
                     }
