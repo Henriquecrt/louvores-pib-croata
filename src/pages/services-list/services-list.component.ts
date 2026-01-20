@@ -192,8 +192,6 @@ export class ServicesListComponent {
   
   editingId = signal<string | null>(null);
   printGroup = signal<any>(null);
-  
-  // Lista temporária para segurar os checkbox marcados
   selectedVocals = signal<string[]>([]);
 
   form = new FormGroup({
@@ -223,13 +221,12 @@ export class ServicesListComponent {
       });
   });
 
-  // --- LÓGICA DO CHECKBOX ---
   toggleVocal(name: string) {
     const current = this.selectedVocals();
     if (current.includes(name)) {
-      this.selectedVocals.set(current.filter(n => n !== name)); // Remove
+      this.selectedVocals.set(current.filter(n => n !== name));
     } else {
-      this.selectedVocals.set([...current, name]); // Adiciona
+      this.selectedVocals.set([...current, name]);
     }
   }
 
@@ -240,28 +237,24 @@ export class ServicesListComponent {
       this.songService.updateCulto(this.editingId()!, {
         title: this.form.value.title!,
         date: this.form.value.date!,
-        vocals: this.selectedVocals() // Salva a lista marcada
+        vocals: this.selectedVocals()
       });
       this.cancelEdit();
     } else {
       this.songService.addCulto({
         title: this.form.value.title!,
         date: this.form.value.date!,
-        vocals: this.selectedVocals(), // Salva a lista marcada
+        vocals: this.selectedVocals(),
         leader: ''
       });
       this.form.reset({ date: new Date().toISOString().split('T')[0] });
-      this.selectedVocals.set([]); // Limpa a seleção
+      this.selectedVocals.set([]);
     }
   }
 
   startEdit(culto: any) {
     this.editingId.set(culto.id);
-    this.form.patchValue({
-      title: culto.title,
-      date: culto.date
-    });
-    // Carrega quem já estava escalado para os checkboxes aparecerem marcados
+    this.form.patchValue({ title: culto.title, date: culto.date });
     this.selectedVocals.set(culto.vocals || []);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -269,14 +262,33 @@ export class ServicesListComponent {
   cancelEdit() {
     this.editingId.set(null);
     this.form.reset({ date: new Date().toISOString().split('T')[0] });
-    this.selectedVocals.set([]); // Limpa a seleção
+    this.selectedVocals.set([]);
   }
 
   delete(id: string) { if(confirm('Tem certeza que deseja excluir este culto?')) this.songService.deleteCulto(id); }
   getDay(dateStr: string) { return dateStr.split('-')[2]; }
   getWeekDay(dateStr: string) { const date = new Date(dateStr + 'T12:00:00'); return date.toLocaleDateString('pt-BR', { weekday: 'long' }); }
   getSongDetails(id: string) { return this.songService.songs().find(s => s.id === id); }
-  printMonth(group: any) { this.printGroup.set(group); setTimeout(() => { window.print(); }, 100); }
+
+  // --- NOVA FUNÇÃO DE IMPRESSÃO ---
+  printMonth(group: any) {
+    this.printGroup.set(group);
+    
+    // 1. Salva o título original da página
+    const originalTitle = document.title;
+    
+    // 2. Muda o título para o nome do arquivo (Ex: Escala PIB Croatá - JANEIRO 2026)
+    document.title = `Escala PIB Croatá - ${group.monthLabel.toUpperCase()}`;
+
+    setTimeout(() => {
+        window.print();
+        
+        // 3. Devolve o título original depois que abrir a janela
+        setTimeout(() => {
+            document.title = originalTitle;
+        }, 500);
+    }, 100);
+  }
   
   shareMonth(group: any) {
     let text = `🗓️ *ESCALA DE ${group.monthLabel.toUpperCase()}*\n_PIB CROATÁ_\n\n🔗 *Acesse os detalhes no sistema:*\n${window.location.origin}\n`;
