@@ -11,14 +11,14 @@ import { AuthService } from '../../services/auth.service';
   template: `
     <div class="relative flex min-h-screen w-full flex-col overflow-x-hidden transition-colors duration-300 font-display">
       
-      <header class="fixed top-0 left-0 right-0 z-50 bg-white/90 dark:bg-background-dark/90 backdrop-blur-md border-b border-primary/10 px-4 sm:px-10 py-2 transition-all duration-300">
+      <header class="fixed top-0 left-0 right-0 z-50 bg-white/90 dark:bg-background-dark/90 backdrop-blur-md border-b border-primary/10 px-4 sm:px-10 py-3 transition-all duration-300">
         <div class="mx-auto max-w-7xl flex items-center justify-between">
           <div class="flex items-center gap-4">
             
-            <img src="logo.png" alt="Logo PIB" class="h-20 md:h-24 w-auto object-contain hover:scale-105 transition-transform drop-shadow-sm py-1">
+            <img src="logo.png" alt="Logo PIB" class="h-20 md:h-24 w-auto object-contain hover:scale-105 transition-transform drop-shadow-sm py-1 cursor-pointer" routerLink="/">
             
             <div class="flex flex-col leading-tight justify-center">
-              <h2 class="text-primary text-xl font-black tracking-tight">PIB CROATÁ</h2>
+              <h2 class="text-primary text-xl font-black tracking-tight cursor-pointer" routerLink="/">PIB CROATÁ</h2>
               <span class="text-[11px] text-gray-500 dark:text-gray-400 font-bold tracking-widest uppercase">Ministério de Louvor</span>
             </div>
           </div>
@@ -237,11 +237,13 @@ import { AuthService } from '../../services/auth.service';
             <img src="logo.png" alt="Logo PIB" class="h-16 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all">
             <span class="font-bold text-gray-900 dark:text-white tracking-widest uppercase">PIB CROATÁ</span>
           </div>
+          
           <div class="flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
             <a routerLink="/about" class="text-sm text-gray-500 hover:text-primary transition-colors cursor-pointer">Sobre Nós</a>
-            <a class="text-sm text-gray-500 hover:text-primary transition-colors cursor-pointer">Localização</a>
-            <a class="text-sm text-gray-500 hover:text-primary transition-colors cursor-pointer">Contato</a>
+            <a routerLink="/about" class="text-sm text-gray-500 hover:text-primary transition-colors cursor-pointer">Localização</a>
+            <a routerLink="/about" class="text-sm text-gray-500 hover:text-primary transition-colors cursor-pointer">Contato</a>
           </div>
+          
           <p class="text-sm text-gray-400">© 2026 Primeira Igreja Batista em Croatá. Todos os direitos reservados.</p>
         </div>
       </footer>

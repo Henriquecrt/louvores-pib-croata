@@ -90,15 +90,22 @@ import { AuthService } from '../../services/auth.service';
           </section>
 
           <div class="relative rounded-3xl overflow-hidden aspect-video shadow-2xl bg-black group">
-             <iframe 
-               class="w-full h-full"
-               src="https://www.youtube.com/embed/_QGgpdDipik" 
-               title="Louvor PIB Croatá - Nosso Deus é Poderoso"
-               frameborder="0" 
-               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-               allowfullscreen>
-             </iframe>
+             <iframe class="w-full h-full" src="https://www.youtube.com/embed/_QGgpdDipik" title="Louvor PIB Croatá - Nosso Deus é Poderoso" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
           </div>
+
+          <section class="bg-white dark:bg-[#1a2e1a] p-4 rounded-3xl shadow-sm border border-gray-100 dark:border-white/5">
+            <h2 class="text-2xl font-bold mb-6 text-center pt-4">Nossa Localização</h2>
+            <div class="w-full h-[400px] rounded-2xl overflow-hidden bg-gray-200">
+              <iframe src="https://www.google.com/maps/embed?pb=!4v1768878770435!6m8!1m7!1sHbAz2MpW4cF3XM_8SVNmUg!2m2!1d-4.415794176125426!2d-40.9003101119495!3f63.25760692905874!4f0.2313618370795183!5f0.4000000000000002" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            </div>
+            
+            <div class="text-center mt-4 pb-2">
+              <a href="https://www.google.com/maps/search/?api=1&query=PIB+Croatá" target="_blank" class="text-sm font-bold text-primary hover:underline flex items-center justify-center gap-1">
+                <span class="material-symbols-outlined text-lg">map</span>
+                Abrir no Google Maps
+              </a>
+            </div>
+          </section>
 
           <section class="bg-primary/5 dark:bg-white/5 p-8 md:p-12 rounded-3xl text-center border border-primary/10 dark:border-white/10">
             <h2 class="text-2xl font-bold mb-2">Fale Conosco</h2>
@@ -107,7 +114,7 @@ import { AuthService } from '../../services/auth.service';
             <div class="flex flex-col md:flex-row justify-center gap-4">
               <a href="mailto:midiapibdecroata@gmail.com" class="flex items-center justify-center gap-3 bg-white dark:bg-[#1a2e1a] px-6 py-4 rounded-xl shadow-sm hover:shadow-md transition-all text-gray-800 dark:text-white font-bold border border-gray-100 dark:border-white/5">
                 <span class="material-symbols-outlined text-red-500">mail</span>
-                midiapibdecroata&#64;gmail.com
+                midiapibdecroata@gmail.com
               </a>
               
               <a href="#" class="flex items-center justify-center gap-3 bg-[#25D366] px-6 py-4 rounded-xl shadow-sm hover:shadow-md transition-all text-white font-bold">
