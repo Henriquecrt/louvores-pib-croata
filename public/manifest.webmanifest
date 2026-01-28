@@ -1,9 +1,11 @@
 {
-  "name": "app",
-  "short_name": "app",
+  "name": "Louvores PIB Croatá",
+  "short_name": "PIB Croatá",
+  "theme_color": "#15803d",
+  "background_color": "#ffffff",
   "display": "standalone",
-  "scope": "./",
-  "start_url": "./",
+  "scope": "/",
+  "start_url": "/",
   "icons": [
     {
       "src": "icons/icon-72x72.png",
