@@ -11,7 +11,7 @@ import { AuthService } from '../../services/auth.service';
   template: `
     <div class="relative flex min-h-screen w-full flex-col overflow-x-hidden transition-colors duration-300 font-display">
       
-      <header class="fixed top-0 left-0 right-0 z-50 bg-white/90 dark:bg-background-dark/90 backdrop-blur-md border-b border-primary/10 px-4 sm:px-10 py-3 transition-all duration-300">
+      <header class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-primary/10 px-4 sm:px-10 py-3 transition-all duration-300">
         <div class="mx-auto max-w-7xl flex items-center justify-between">
           <div class="flex items-center gap-4">
             
@@ -19,50 +19,43 @@ import { AuthService } from '../../services/auth.service';
             
             <div class="flex flex-col leading-tight justify-center">
               <h2 class="text-primary text-xl font-black tracking-tight cursor-pointer" routerLink="/">PIB CROATÁ</h2>
-              <span class="text-[11px] text-gray-500 dark:text-gray-400 font-bold tracking-widest uppercase">Ministério de Louvor</span>
+              <span class="text-[11px] text-gray-500 font-bold tracking-widest uppercase">Ministério de Louvor</span>
             </div>
           </div>
           
           <nav class="hidden md:flex items-center gap-8">
             <a routerLink="/" class="text-sm font-bold text-primary cursor-default">Início</a>
-            <a routerLink="/services" class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary transition-colors duration-200">Cultos</a>
-            <a routerLink="/repertoire" class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary transition-colors duration-200">Repertório</a>
-            <a routerLink="/stats" class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-orange-500 transition-colors duration-200 flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">equalizer</span> Estatísticas</a>
-            <a routerLink="/about" class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary transition-colors duration-200">Sobre Nós</a>
+            <a routerLink="/services" class="text-sm font-medium text-gray-600 hover:text-primary transition-colors duration-200">Cultos</a>
+            <a routerLink="/repertoire" class="text-sm font-medium text-gray-600 hover:text-primary transition-colors duration-200">Repertório</a>
+            <a routerLink="/stats" class="text-sm font-medium text-gray-600 hover:text-orange-500 transition-colors duration-200 flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">equalizer</span> Estatísticas</a>
+            <a routerLink="/about" class="text-sm font-medium text-gray-600 hover:text-primary transition-colors duration-200">Sobre Nós</a>
           </nav>
           
           <div class="flex items-center gap-2 md:hidden">
-            <button (click)="toggleTheme()" class="flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
-              <span class="material-symbols-outlined">{{ isDarkMode() ? 'light_mode' : 'dark_mode' }}</span>
-            </button>
-            <button (click)="toggleMobileMenu()" class="flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors focus:outline-none">
+            <button (click)="toggleMobileMenu()" class="flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 transition-colors focus:outline-none">
               <span class="material-symbols-outlined">{{ isMobileMenuOpen() ? 'close' : 'menu' }}</span>
             </button>
           </div>
           
           <div class="hidden md:flex items-center gap-4">
-            <button (click)="toggleTheme()" class="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors" [title]="isDarkMode() ? 'Mudar para Tema Claro' : 'Mudar para Tema Escuro'">
-              <span class="material-symbols-outlined text-xl">{{ isDarkMode() ? 'light_mode' : 'dark_mode' }}</span>
-            </button>
-
-            <button (click)="handleAuth()" class="inline-flex items-center justify-center rounded-lg bg-gray-900 dark:bg-white px-5 py-2 text-sm font-bold text-white dark:text-gray-900 shadow-sm hover:opacity-90 transition-all duration-200 cursor-pointer">
+            <button (click)="handleAuth()" class="inline-flex items-center justify-center rounded-lg bg-gray-900 px-5 py-2 text-sm font-bold text-white shadow-sm hover:opacity-90 transition-all duration-200 cursor-pointer">
               {{ auth.currentUser() ? 'Sair' : 'Área da Liderança' }}
             </button>
           </div>
         </div>
 
         @if (isMobileMenuOpen()) {
-          <div class="md:hidden absolute top-full left-0 right-0 bg-white dark:bg-background-dark border-b border-primary/10 shadow-xl animate-[slideIn_0.2s_ease-out]">
+          <div class="md:hidden absolute top-full left-0 right-0 bg-white border-b border-primary/10 shadow-xl animate-[slideIn_0.2s_ease-out]">
             <nav class="flex flex-col p-4 gap-2">
-              <a routerLink="/" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 text-primary font-bold transition-colors">Início</a>
-              <a routerLink="/services" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 text-gray-600 dark:text-gray-200 hover:text-primary transition-colors">Cultos</a>
-              <a routerLink="/repertoire" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 text-gray-600 dark:text-gray-200 hover:text-primary transition-colors">Repertório</a>
-              <a routerLink="/stats" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-orange-50 dark:hover:bg-orange-500/10 text-gray-600 dark:text-gray-200 hover:text-orange-500 transition-colors flex items-center gap-2"><span class="material-symbols-outlined">equalizer</span> Estatísticas</a>
-              <a routerLink="/about" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 text-gray-600 dark:text-gray-200 hover:text-primary transition-colors">Sobre Nós</a>
+              <a routerLink="/" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-primary font-bold transition-colors">Início</a>
+              <a routerLink="/services" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-gray-600 hover:text-primary transition-colors">Cultos</a>
+              <a routerLink="/repertoire" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-gray-600 hover:text-primary transition-colors">Repertório</a>
+              <a routerLink="/stats" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-orange-50 text-gray-600 hover:text-orange-500 transition-colors flex items-center gap-2"><span class="material-symbols-outlined">equalizer</span> Estatísticas</a>
+              <a routerLink="/about" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-gray-600 hover:text-primary transition-colors">Sobre Nós</a>
               
-              <div class="h-px bg-gray-100 dark:bg-white/10 my-1"></div>
+              <div class="h-px bg-gray-100 my-1"></div>
               
-              <button (click)="handleAuth(); toggleMobileMenu()" class="w-full p-3 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold text-center shadow-sm">
+              <button (click)="handleAuth(); toggleMobileMenu()" class="w-full p-3 rounded-xl bg-gray-900 text-white font-bold text-center shadow-sm">
                  {{ auth.currentUser() ? 'Sair' : 'Área da Liderança' }}
               </button>
             </nav>
@@ -72,10 +65,10 @@ import { AuthService } from '../../services/auth.service';
 
       <main class="flex-grow pt-28">
         <section class="relative flex flex-col items-center justify-center pt-12 pb-24 px-4 sm:px-6 lg:px-8 bg-hero-pattern">
-          <div class="absolute inset-0 bg-gradient-to-b from-transparent to-white/50 dark:to-background-dark/50 pointer-events-none"></div>
+          <div class="absolute inset-0 bg-gradient-to-b from-transparent to-white/80 pointer-events-none"></div>
           <div class="relative z-10 mx-auto max-w-4xl text-center flex flex-col items-center gap-8">
             
-            <div class="inline-flex items-center gap-2 rounded-full bg-green-100 dark:bg-green-900/30 px-4 py-1.5 text-sm font-bold text-green-700 dark:text-green-400 ring-1 ring-inset ring-green-600/20 uppercase tracking-wide">
+            <div class="inline-flex items-center gap-2 rounded-full bg-green-100 px-4 py-1.5 text-sm font-bold text-green-700 ring-1 ring-inset ring-green-600/20 uppercase tracking-wide">
               <span class="relative flex h-2 w-2">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
                 <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
@@ -83,7 +76,7 @@ import { AuthService } from '../../services/auth.service';
               Portal Oficial
             </div>
 
-            <h1 class="text-4xl font-black leading-tight tracking-tight text-gray-900 dark:text-white sm:text-5xl md:text-6xl lg:leading-[1.1]">
+            <h1 class="text-4xl font-black leading-tight tracking-tight text-gray-900 sm:text-5xl md:text-6xl lg:leading-[1.1]">
               Adore com a gente <br class="hidden md:block"/>
               <span class="text-primary relative inline-block">
                 em espírito e verdade
@@ -93,7 +86,7 @@ import { AuthService } from '../../services/auth.service';
               </span>
             </h1>
 
-            <p class="max-w-2xl text-lg leading-relaxed text-gray-600 dark:text-gray-300 md:text-xl">
+            <p class="max-w-2xl text-lg leading-relaxed text-gray-600 md:text-xl">
               Bem-vindo à Primeira Igreja Batista em Croatá. Acompanhe nossas escalas, aprenda os louvores e participe dos nossos cultos.
             </p>
 
@@ -103,12 +96,12 @@ import { AuthService } from '../../services/auth.service';
                 <span>Ver Agenda de Cultos</span>
               </button>
               
-              <button routerLink="/repertoire" class="flex items-center justify-center gap-2 rounded-xl bg-white px-8 py-4 text-base font-bold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-200 transition-all duration-200 hover:bg-gray-50 hover:text-primary dark:bg-gray-800 dark:text-gray-200 dark:ring-gray-700 dark:hover:bg-gray-700">
+              <button routerLink="/repertoire" class="flex items-center justify-center gap-2 rounded-xl bg-white px-8 py-4 text-base font-bold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-200 transition-all duration-200 hover:bg-gray-50 hover:text-primary">
                 <span class="material-symbols-outlined">library_music</span>
                 Repertório
               </button>
 
-              <button routerLink="/stats" class="flex items-center justify-center gap-2 rounded-xl bg-orange-50 px-8 py-4 text-base font-bold text-orange-600 shadow-sm ring-1 ring-inset ring-orange-200 transition-all duration-200 hover:bg-orange-100 hover:text-orange-700 dark:bg-orange-500/10 dark:text-orange-400 dark:ring-orange-500/30 dark:hover:bg-orange-500/20">
+              <button routerLink="/stats" class="flex items-center justify-center gap-2 rounded-xl bg-orange-50 px-8 py-4 text-base font-bold text-orange-600 shadow-sm ring-1 ring-inset ring-orange-200 transition-all duration-200 hover:bg-orange-100 hover:text-orange-700">
                 <span class="material-symbols-outlined">equalizer</span>
                 Ranking
               </button>
@@ -116,8 +109,8 @@ import { AuthService } from '../../services/auth.service';
           </div>
 
           <div class="relative mt-16 w-full max-w-5xl mx-auto px-4">
-            <div class="relative rounded-2xl bg-gray-900/5 p-2 ring-1 ring-inset ring-gray-900/10 dark:bg-white/10 dark:ring-white/10 lg:rounded-3xl lg:p-4">
-              <div class="overflow-hidden rounded-xl bg-white shadow-2xl dark:bg-gray-900 border border-gray-100 dark:border-gray-800 relative aspect-[16/9] md:aspect-[21/9] flex items-center justify-center bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAqWg9vaHjwO3kSoP6lhHDdrObQ7BRnHQue95LVR-bq4-fOTsdjV_ApaaS0TZJAxIxklQgS4u4_y6eDX3Cec7HjCTmZzbiZUSg_8uk-Kp_mIXsnxEYQkd05_agNiw0caZzPsSb6mmzQwH-CRW3XpCsQBk0f78l9t5oF1Ei587bO4QBGMwh0XrQguGts9KqIWukcewXddgbIQ-r7SQ1KvAYIgkZdpfn3QCtgNyU8JSy1xm3EqbQEOucOq_EzkwubNnO4DM6cuR5O7eX6');">
+            <div class="relative rounded-2xl bg-gray-900/5 p-2 ring-1 ring-inset ring-gray-900/10 lg:rounded-3xl lg:p-4">
+              <div class="overflow-hidden rounded-xl bg-white shadow-2xl border border-gray-100 relative aspect-[16/9] md:aspect-[21/9] flex items-center justify-center bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAqWg9vaHjwO3kSoP6lhHDdrObQ7BRnHQue95LVR-bq4-fOTsdjV_ApaaS0TZJAxIxklQgS4u4_y6eDX3Cec7HjCTmZzbiZUSg_8uk-Kp_mIXsnxEYQkd05_agNiw0caZzPsSb6mmzQwH-CRW3XpCsQBk0f78l9t5oF1Ei587bO4QBGMwh0XrQguGts9KqIWukcewXddgbIQ-r7SQ1KvAYIgkZdpfn3QCtgNyU8JSy1xm3EqbQEOucOq_EzkwubNnO4DM6cuR5O7eX6');">
                 <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
                 
                 <div class="absolute inset-0 flex items-center justify-center p-4 overflow-hidden">
@@ -189,38 +182,38 @@ import { AuthService } from '../../services/auth.service';
           </div>
         </section>
 
-        <section class="py-24 px-4 bg-white dark:bg-background-dark">
+        <section class="py-24 px-4 bg-white">
           <div class="mx-auto max-w-7xl">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
               
-              <a routerLink="/services" class="group flex flex-col items-center gap-4 p-8 rounded-3xl bg-gray-50 dark:bg-white/5 hover:bg-white hover:shadow-xl dark:hover:bg-[#1a2e1a] transition-all duration-300 border border-transparent hover:border-gray-100 dark:hover:border-white/10 cursor-pointer">
-                <div class="h-16 w-16 rounded-2xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 mb-2 group-hover:scale-110 transition-transform">
+              <a routerLink="/services" class="group flex flex-col items-center gap-4 p-8 rounded-3xl bg-gray-50 hover:bg-white hover:shadow-xl transition-all duration-300 border border-transparent hover:border-gray-100 cursor-pointer">
+                <div class="h-16 w-16 rounded-2xl bg-green-100 flex items-center justify-center text-green-600 mb-2 group-hover:scale-110 transition-transform">
                   <span class="material-symbols-outlined text-3xl">calendar_month</span>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Agenda de Cultos</h3>
-                <p class="text-gray-500 dark:text-gray-400 leading-relaxed">
+                <h3 class="text-xl font-bold text-gray-900">Agenda de Cultos</h3>
+                <p class="text-gray-500 leading-relaxed">
                   Confira os dias, horários e quem estará ministrando o louvor em cada culto da nossa igreja.
                 </p>
                 <span class="text-primary font-bold text-sm mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Ver Agenda →</span>
               </a>
 
-              <a routerLink="/repertoire" class="group flex flex-col items-center gap-4 p-8 rounded-3xl bg-gray-50 dark:bg-white/5 hover:bg-white hover:shadow-xl dark:hover:bg-[#1a2e1a] transition-all duration-300 border border-transparent hover:border-gray-100 dark:hover:border-white/10 cursor-pointer">
-                <div class="h-16 w-16 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-2 group-hover:scale-110 transition-transform">
+              <a routerLink="/repertoire" class="group flex flex-col items-center gap-4 p-8 rounded-3xl bg-gray-50 hover:bg-white hover:shadow-xl transition-all duration-300 border border-transparent hover:border-gray-100 cursor-pointer">
+                <div class="h-16 w-16 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 mb-2 group-hover:scale-110 transition-transform">
                   <span class="material-symbols-outlined text-3xl">lyrics</span>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Nosso Repertório</h3>
-                <p class="text-gray-500 dark:text-gray-400 leading-relaxed">
+                <h3 class="text-xl font-bold text-gray-900">Nosso Repertório</h3>
+                <p class="text-gray-500 leading-relaxed">
                   Acesse as letras, ouça os hinos e aprenda as canções que cantamos em nossa comunidade.
                 </p>
                 <span class="text-primary font-bold text-sm mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Ver Músicas →</span>
               </a>
 
-              <a routerLink="/stats" class="group flex flex-col items-center gap-4 p-8 rounded-3xl bg-gray-50 dark:bg-white/5 hover:bg-white hover:shadow-xl dark:hover:bg-[#1a2e1a] transition-all duration-300 border border-transparent hover:border-gray-100 dark:hover:border-white/10 cursor-pointer">
-                <div class="h-16 w-16 rounded-2xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400 mb-2 group-hover:scale-110 transition-transform">
+              <a routerLink="/stats" class="group flex flex-col items-center gap-4 p-8 rounded-3xl bg-gray-50 hover:bg-white hover:shadow-xl transition-all duration-300 border border-transparent hover:border-gray-100 cursor-pointer">
+                <div class="h-16 w-16 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-600 mb-2 group-hover:scale-110 transition-transform">
                   <span class="material-symbols-outlined text-3xl">equalizer</span>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Mais Tocadas</h3>
-                <p class="text-gray-500 dark:text-gray-400 leading-relaxed">
+                <h3 class="text-xl font-bold text-gray-900">Mais Tocadas</h3>
+                <p class="text-gray-500 leading-relaxed">
                   Veja quais louvores tem marcado nossa história recente através do nosso ranking de execuções.
                 </p>
                 <span class="text-primary font-bold text-sm mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Ver Ranking →</span>
@@ -231,11 +224,11 @@ import { AuthService } from '../../services/auth.service';
         </section>
       </main>
 
-      <footer class="border-t border-gray-100 bg-white/50 px-4 py-12 dark:bg-background-dark dark:border-white/5">
+      <footer class="border-t border-gray-100 bg-white/50 px-4 py-12">
         <div class="mx-auto max-w-7xl flex flex-col items-center gap-6 text-center">
           <div class="flex items-center gap-2 mb-2">
             <img src="logo.png" alt="Logo PIB" class="h-16 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all">
-            <span class="font-bold text-gray-900 dark:text-white tracking-widest uppercase">PIB CROATÁ</span>
+            <span class="font-bold text-gray-900 tracking-widest uppercase">PIB CROATÁ</span>
           </div>
           
           <div class="flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
@@ -255,14 +248,11 @@ export class HomeComponent {
   router = inject(Router);
   
   isMobileMenuOpen = signal(false);
-  isDarkMode = signal(false);
 
   constructor() {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      this.isDarkMode.set(true);
-      document.documentElement.classList.add('dark');
-    }
+    // GARANTE QUE O MODO CLARO ESTEJA ATIVO
+    document.documentElement.classList.remove('dark');
+    localStorage.removeItem('theme'); // Limpa qualquer preferência salva
   }
 
   handleAuth() {
@@ -275,17 +265,5 @@ export class HomeComponent {
 
   toggleMobileMenu() {
     this.isMobileMenuOpen.update(val => !val);
-  }
-
-  toggleTheme() {
-    this.isDarkMode.update(v => !v);
-    
-    if (this.isDarkMode()) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
   }
 }
