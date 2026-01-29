@@ -31,13 +31,7 @@ export class SongService {
   readonly cultos = signal<Culto[]>([]);
 
   readonly vocalTeam = signal<string[]>([
-    'Ana Laura',
-    'Aparecida',
-    'Rebeca',
-    'Coral MCM',
-    'Sophia',
-    'Samantha',
-    'Linéia'
+    'Ana Laura', 'Aparecida', 'Rebeca', 'Coral MCM', 'Sophia', 'Samantha', 'Linéia'
   ]);
 
   constructor() {
@@ -67,19 +61,26 @@ export class SongService {
     await deleteDoc(doc(db, 'songs', id));
   }
 
-  // --- CULTOS (CORRIGIDO PARA 'services') ---
+  // --- CULTOS (AGORA APONTANDO PARA 'services') ---
   private listenToCultos() {
-    // 👇 AQUI ESTAVA 'cultos', MUDEI PARA 'services'
+    console.log('🔄 Iniciando conexão com a coleção "services"...');
+    
+    // 👇 O segredo está aqui: mudamos de 'cultos' para 'services'
     const cultosCollection = collection(db, 'services'); 
+    
     onSnapshot(cultosCollection, (snapshot) => {
       const cultosData: Culto[] = [];
       snapshot.forEach((doc) => cultosData.push({ id: doc.id, ...doc.data() } as Culto));
+      
+      console.log(`✅ Sucesso! Encontrei ${cultosData.length} cultos no banco.`);
+      
       this.cultos.set(cultosData.sort((a, b) => b.date.localeCompare(a.date)));
+    }, (error) => {
+      console.error('❌ Erro ao buscar cultos:', error);
     });
   }
 
   async addCulto(culto: Omit<Culto, 'id' | 'songIds'>) {
-    // 👇 AQUI TAMBÉM
     await addDoc(collection(db, 'services'), { 
       ...culto, 
       songIds: [], 
@@ -89,36 +90,30 @@ export class SongService {
   }
 
   async updateCulto(id: string, data: Partial<Culto>) {
-    // 👇 E AQUI
     await updateDoc(doc(db, 'services', id), data);
   }
 
   async deleteCulto(id: string) {
-    // 👇 E AQUI
     await deleteDoc(doc(db, 'services', id));
   }
 
   // --- CONTAGEM INTELIGENTE ---
   async addSongToCulto(cultoId: string, songId: string) {
-    // 👇 MUDADO PARA 'services'
     await updateDoc(doc(db, 'services', cultoId), { songIds: arrayUnion(songId) });
     await updateDoc(doc(db, 'songs', songId), { views: increment(1) });
   }
 
   async removeSongFromCulto(cultoId: string, songId: string) {
-    // 👇 MUDADO PARA 'services'
     await updateDoc(doc(db, 'services', cultoId), { songIds: arrayRemove(songId) });
     await updateDoc(doc(db, 'songs', songId), { views: increment(-1) });
   }
 
   async addVocalToCulto(cultoId: string, name: string) {
     if (!name.trim()) return;
-    // 👇 MUDADO PARA 'services'
     await updateDoc(doc(db, 'services', cultoId), { vocals: arrayUnion(name.trim()) });
   }
 
   async removeVocalFromCulto(cultoId: string, name: string) {
-    // 👇 MUDADO PARA 'services'
     await updateDoc(doc(db, 'services', cultoId), { vocals: arrayRemove(name) });
   }
 }
