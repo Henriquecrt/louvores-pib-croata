@@ -93,7 +93,7 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
                         <button (click)="openEditModal(song)" class="text-gray-400 hover:text-blue-600 transition-colors p-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20" title="Editar">
                           <span class="material-symbols-outlined text-[20px]">edit</span>
                         </button>
-                        <button (click)="confirmDelete(song)" class="text-gray-400 hover:text-red-600 transition-colors p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20" title="Excluir">
+                        <button (click)="askToDelete(song)" class="text-gray-400 hover:text-red-600 transition-colors p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20" title="Excluir">
                           <span class="material-symbols-outlined text-[20px]">delete</span>
                         </button>
                       </div>
@@ -129,7 +129,7 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
               <h3 class="text-red-700 dark:text-red-400 font-bold text-xl mb-2">Zona de Perigo</h3>
               <p class="text-red-600/70 dark:text-red-300/70 mb-4">Use este botão para apagar TODAS as músicas do banco de dados.</p>
               <p class="mb-4 text-sm font-bold">Total de músicas encontradas: {{ songService.songs().length }}</p>
-              <button (click)="deleteAllSongs()" class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 mx-auto">
+              <button (click)="askToDeleteAll()" class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 mx-auto">
                 <span class="material-symbols-outlined">delete_forever</span>
                 EXCLUIR TUDO AGORA
               </button>
@@ -157,16 +157,13 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
               <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-white/5">
                 <div class="flex flex-col">
                   <h2 class="text-2xl font-bold text-gray-900 dark:text-white leading-tight uppercase">{{ song.title }}</h2>
-                  
                   <div class="flex flex-wrap items-center gap-3 mt-2">
                     <span class="text-primary font-medium flex items-center gap-1 uppercase">
                       <span class="material-symbols-outlined text-[18px]">mic</span> {{ song.artist }}
                     </span>
-                    
                     @if(song.key) { 
                       <span class="font-bold text-gray-700 dark:text-gray-300 text-sm border border-gray-300 dark:border-gray-600 px-2 rounded">Tom: {{ song.key }}</span> 
                     }
-
                     @if(getLastPlayed(song.id); as lastDate) {
                         <span class="flex items-center gap-1 text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5 rounded-full border border-orange-100 dark:border-orange-900/30" title="Data do último culto em que esta música foi usada">
                           <span class="material-symbols-outlined text-[14px]">history</span>
@@ -174,7 +171,6 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
                         </span>
                     }
                   </div>
-
                 </div>
                 <button (click)="closeViewModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-2 rounded-full hover:bg-gray-200 dark:hover:bg-white/10"><span class="material-symbols-outlined text-2xl">close</span></button>
               </div>
@@ -182,19 +178,10 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
               <div class="flex-1 overflow-y-auto p-6 md:p-8 bg-white dark:bg-[#1a2e1a]">
                 @if (song.youtubeUrl && getSafeEmbedUrl(song.youtubeUrl)) {
                   <div class="mb-8 w-full aspect-video rounded-xl overflow-hidden shadow-lg border border-gray-100 dark:border-white/10">
-                    <iframe 
-                      [src]="getSafeEmbedUrl(song.youtubeUrl)" 
-                      title="YouTube video player" 
-                      frameborder="0" 
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                      allowfullscreen
-                      class="w-full h-full"
-                    ></iframe>
+                    <iframe [src]="getSafeEmbedUrl(song.youtubeUrl)" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full h-full"></iframe>
                   </div>
                 }
-
                 <pre class="whitespace-pre-wrap font-sans text-lg md:text-xl text-gray-700 dark:text-gray-200 leading-relaxed text-center">{{ song.lyrics }}</pre>
-                
                 @if (song.tags) {
                   <div class="mt-8 flex flex-wrap gap-2 justify-center">
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600">#{{ song.tags }}</span>
@@ -210,11 +197,61 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
         </div>
       }
 
-      @if (showToast()) {
-        <div class="fixed bottom-6 right-6 z-[80] animate-[slideIn_0.3s_ease-out_forwards]">
-          <div class="flex items-center w-full max-w-sm p-4 bg-white dark:bg-[#1a2e1a] rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border-l-4 border-primary">
-            <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-primary bg-primary/10 rounded-lg"><span class="material-symbols-outlined text-[20px]">check</span></div>
-            <div class="ml-3 text-sm font-normal text-gray-800 dark:text-gray-100"><span class="font-semibold block mb-0.5 text-primary">Sucesso!</span> Operação realizada com sucesso!</div>
+      @if (showConfirmModal()) {
+        <div class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div class="absolute inset-0 bg-black/60 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]" (click)="closeConfirmModal()"></div>
+          <div class="relative bg-white dark:bg-[#1a2e1a] rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-gray-200 dark:border-white/10 animate-[scaleIn_0.2s_ease-out]">
+            <div class="flex flex-col items-center text-center gap-4">
+              <div class="h-14 w-14 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400">
+                <span class="material-symbols-outlined text-3xl">warning</span>
+              </div>
+              <h3 class="text-xl font-bold text-gray-900 dark:text-white">Tem certeza?</h3>
+              <p class="text-gray-500 dark:text-gray-300">
+                {{ confirmMessage() }}
+              </p>
+              <div class="flex gap-3 w-full mt-2">
+                <button (click)="closeConfirmModal()" class="flex-1 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-white font-bold hover:bg-gray-200 transition-colors">
+                  Cancelar
+                </button>
+                <button (click)="confirmAction()" class="flex-1 py-2.5 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 shadow-md shadow-red-200 dark:shadow-none transition-colors">
+                  Sim, Excluir
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (showAlertModal()) {
+        <div class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div class="absolute inset-0 bg-black/60 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]" (click)="closeAlertModal()"></div>
+          <div class="relative bg-white dark:bg-[#1a2e1a] rounded-2xl shadow-2xl p-6 w-full max-w-sm border-l-8 border-yellow-500 animate-[scaleIn_0.2s_ease-out]">
+            <div class="flex flex-col gap-3">
+              <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <span class="material-symbols-outlined text-yellow-500">error</span>
+                Atenção
+              </h3>
+              <p class="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed">
+                {{ alertMessage() }}
+              </p>
+              <button (click)="closeAlertModal()" class="mt-2 w-full py-2.5 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-black font-bold hover:opacity-90 transition-opacity">
+                Entendi
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (toastState().show) {
+        <div class="fixed top-24 left-1/2 -translate-x-1/2 z-[110] w-full max-w-sm px-4 animate-[slideDown_0.3s_ease-out]">
+          <div [class]="'flex items-center p-4 rounded-xl shadow-2xl border-l-4 ' + toastState().classes">
+            <div [class]="'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg ' + toastState().iconBg">
+              <span class="material-symbols-outlined text-[20px]">{{ toastState().icon }}</span>
+            </div>
+            <div class="ml-3 text-sm font-normal text-gray-800 dark:text-gray-100">
+              <span class="font-bold block mb-0.5">{{ toastState().title }}</span> 
+              {{ toastState().message }}
+            </div>
           </div>
         </div>
       }
@@ -231,9 +268,18 @@ export class RepertoireComponent {
   isModalOpen = signal(false);
   editingSong = signal<Song | null>(null);
   selectedSong = signal<Song | null>(null);
-  showToast = signal(false);
 
-  // Computa o TOP 5
+  // --- ESTADOS DOS NOVOS MODAIS E TOAST ---
+  showConfirmModal = signal(false);
+  confirmMessage = signal('');
+  pendingDeleteAction: (() => void) | null = null;
+
+  showAlertModal = signal(false);
+  alertMessage = signal('');
+
+  toastState = signal({ show: false, title: '', message: '', classes: '', icon: '', iconBg: '' });
+  // ----------------------------------------
+
   topSongs = computed(() => {
     return this.songService.songs()
       .filter(s => (s.views || 0) > 0)
@@ -257,16 +303,73 @@ export class RepertoireComponent {
     return `${d}/${m}/${y}`;
   }
 
-  // --- FUNÇÃO AUXILIAR DE LIMPEZA ---
-  // Remove acentos e espaços extras (ex: "CORAÇÃO " vira "CORACAO")
   normalizeText(text: string): string {
-    return text
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "") // Remove acentos
-      .trim()
-      .toUpperCase();
+    return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toUpperCase();
   }
-  // ----------------------------------
+
+  // --- CONFIRMAÇÃO ---
+  askToDelete(song: Song) {
+    this.confirmMessage.set(`Deseja realmente excluir "${song.title}"?`);
+    this.pendingDeleteAction = () => {
+      this.songService.deleteSong(song.id);
+      this.triggerToast('Sucesso', 'Música excluída com sucesso!', 'success');
+    };
+    this.showConfirmModal.set(true);
+  }
+
+  askToDeleteAll() {
+    this.confirmMessage.set("Isso apagará TODAS as músicas do banco de dados. Essa ação não pode ser desfeita. Tem certeza?");
+    this.pendingDeleteAction = async () => {
+      const songs = this.songService.songs();
+      for (const song of songs) { await this.songService.deleteSong(song.id); }
+      this.triggerToast('Limpeza', 'Todas as músicas foram removidas.', 'success');
+    };
+    this.showConfirmModal.set(true);
+  }
+
+  confirmAction() {
+    if (this.pendingDeleteAction) this.pendingDeleteAction();
+    this.closeConfirmModal();
+  }
+
+  closeConfirmModal() {
+    this.showConfirmModal.set(false);
+    this.pendingDeleteAction = null;
+  }
+
+  // --- ALERTA ---
+  triggerAlert(message: string) {
+    this.alertMessage.set(message);
+    this.showAlertModal.set(true);
+  }
+
+  closeAlertModal() {
+    this.showAlertModal.set(false);
+  }
+
+  // --- TOAST ---
+  triggerToast(title: string, message: string, type: 'success' | 'warning' | 'error') {
+    let classes = '';
+    let icon = '';
+    let iconBg = '';
+
+    if (type === 'success') {
+      classes = 'bg-white dark:bg-[#1a2e1a] border-primary';
+      icon = 'check';
+      iconBg = 'bg-primary/10 text-primary';
+    } else if (type === 'warning') {
+      classes = 'bg-white dark:bg-[#1a2e1a] border-yellow-500';
+      icon = 'warning';
+      iconBg = 'bg-yellow-100 text-yellow-600';
+    } else {
+      classes = 'bg-white dark:bg-[#1a2e1a] border-red-500';
+      icon = 'error';
+      iconBg = 'bg-red-100 text-red-600';
+    }
+
+    this.toastState.set({ show: true, title, message, classes, icon, iconBg });
+    setTimeout(() => { this.toastState.update(s => ({ ...s, show: false })); }, 3500);
+  }
 
   openAddModal() { this.editingSong.set(null); this.isModalOpen.set(true); }
   openEditModal(song: Song) { this.editingSong.set(song); this.isModalOpen.set(true); }
@@ -275,78 +378,40 @@ export class RepertoireComponent {
   onSaveSong(songData: any) {
     const currentSong = this.editingSong();
     
-    // Converte para maiúsculo para salvar bonito no banco
     const upperTitle = songData.title.trim().toUpperCase();
     const upperArtist = songData.artist ? songData.artist.trim().toUpperCase() : '';
     const upperKey = songData.key ? songData.key.trim().toUpperCase() : '';
 
-    const normalizedData = {
-      ...songData,
-      title: upperTitle,
-      artist: upperArtist,
-      key: upperKey
-    };
+    const normalizedData = { ...songData, title: upperTitle, artist: upperArtist, key: upperKey };
 
-    // --- VERIFICAÇÃO DE DUPLICIDADE (AGORA IGNORANDO ACENTOS) ---
+    // Verificação de Duplicidade (Usando o novo Modal de Alerta)
     if (!currentSong) {
-      // 1. Limpa o texto que o usuário digitou (remove acento)
       const inputLimpo = this.normalizeText(upperTitle);
-      console.log('Tentando salvar:', inputLimpo);
-
-      // 2. Compara com cada música do banco (também limpando o acento delas)
       const exists = this.songService.songs().some(song => {
         const bancoLimpo = this.normalizeText(song.title);
-        // console.log(`Comparando com: ${bancoLimpo}`); // Descomente se precisar debugar muito
         return bancoLimpo === inputLimpo;
       });
 
       if (exists) {
-        alert(`⚠️ Atenção: A música "${upperTitle}" já está cadastrada no sistema!\n\n(Verificamos que já existe um título igual ou muito parecido).`);
+        this.triggerAlert(`A música "${upperTitle}" já existe no sistema!\nVerifique a lista antes de cadastrar.`);
         return; 
       }
     }
-    // ----------------------------------
 
     if (currentSong) this.songService.updateSong(currentSong.id, normalizedData);
     else this.songService.addSong(normalizedData);
     
     this.closeModal(); 
-    this.triggerToast();
+    this.triggerToast('Sucesso', 'Música salva corretamente.', 'success');
   }
 
-  confirmDelete(song: Song) { if (confirm(`Tem certeza que deseja excluir "${song.title}"?`)) { this.songService.deleteSong(song.id); this.triggerToast(); } }
   viewSong(song: Song) { this.selectedSong.set(song); }
   closeViewModal() { this.selectedSong.set(null); }
-  triggerToast() { this.showToast.set(true); setTimeout(() => { this.showToast.set(false); }, 3000); }
-
+  
   getSafeEmbedUrl(url: string): SafeResourceUrl | null {
     if (!url) return null;
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-
-    if (match && match[2].length === 11) {
-      const videoId = match[2];
-      const embedUrl = `https://www.youtube.com/embed/${videoId}`;
-      return this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
-    }
+    const match = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/);
+    if (match && match[2].length === 11) return this.sanitizer.bypassSecurityTrustResourceUrl(`https://www.youtube.com/embed/${match[2]}`);
     return null;
-  }
-
-  getLetrasSearchUrl(song: Song): string {
-    const query = encodeURIComponent(`${song.title} ${song.artist}`);
-    return `https://www.letras.mus.br/?q=${query}`;
-  }
-
-  async deleteAllSongs() {
-    const confirm1 = confirm("ATENÇÃO: Você tem certeza que deseja EXCLUIR TODAS as músicas?");
-    if (!confirm1) return;
-    const confirm2 = confirm("Isso apaga o banco de dados inteiro. Confirma?");
-    if (!confirm2) return;
-    const songs = this.songService.songs();
-    if (songs.length === 0) { alert('O banco de dados já está vazio!'); return; }
-    let count = 0;
-    for (const song of songs) { await this.songService.deleteSong(song.id); count++; }
-    alert(`Limpeza concluída! ${count} músicas foram removidas.`);
-    window.location.reload();
   }
 }
