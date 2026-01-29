@@ -168,10 +168,10 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
                     }
 
                     @if(getLastPlayed(song.id); as lastDate) {
-                       <span class="flex items-center gap-1 text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5 rounded-full border border-orange-100 dark:border-orange-900/30" title="Data do último culto em que esta música foi usada">
+                        <span class="flex items-center gap-1 text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5 rounded-full border border-orange-100 dark:border-orange-900/30" title="Data do último culto em que esta música foi usada">
                           <span class="material-symbols-outlined text-[14px]">history</span>
                           Última vez: {{ lastDate }}
-                       </span>
+                        </span>
                     }
                   </div>
 
@@ -248,22 +248,14 @@ export class RepertoireComponent {
     return songs.filter(song => song.title.toLowerCase().includes(query) || song.lyrics.toLowerCase().includes(query) || (song.artist && song.artist.toLowerCase().includes(query)));
   });
 
-  // --- NOVA FUNÇÃO: PEGAR ÚLTIMA DATA ---
   getLastPlayed(songId: string): string | null {
-    const cultos = this.songService.cultos(); // Pega todos os cultos
-    // Filtra cultos que têm essa música
+    const cultos = this.songService.cultos();
     const playedIn = cultos.filter(c => c.songIds.includes(songId));
-    
-    if (playedIn.length === 0) return null; // Nunca foi tocada
-
-    // Como os cultos já vêm ordenados por data no Service, o primeiro é o mais recente
+    if (playedIn.length === 0) return null;
     const lastCulto = playedIn[0];
-    
-    // Formata a data de YYYY-MM-DD para DD/MM/YYYY
     const [y, m, d] = lastCulto.date.split('-');
     return `${d}/${m}/${y}`;
   }
-  // -------------------------------------
 
   openAddModal() { this.editingSong.set(null); this.isModalOpen.set(true); }
   openEditModal(song: Song) { this.editingSong.set(song); this.isModalOpen.set(true); }
@@ -271,9 +263,29 @@ export class RepertoireComponent {
   
   onSaveSong(songData: any) {
     const currentSong = this.editingSong();
+    
+    // --- VERIFICAÇÃO DE DUPLICIDADE ---
+    // Se NÃO estiver editando (é música nova), verifica se já existe
+    if (!currentSong) {
+      const titleToCheck = songData.title.trim().toLowerCase();
+      
+      // Verifica no array de músicas (que já está carregado) se existe alguma com o mesmo título
+      const exists = this.songService.songs().some(song => 
+        song.title.toLowerCase().trim() === titleToCheck
+      );
+
+      if (exists) {
+        alert(`⚠️ Atenção: A música "${songData.title}" já está cadastrada no sistema!\n\nPor favor, verifique a lista ou use outro nome para diferenciar.`);
+        return; // Interrompe a função, não salva nada
+      }
+    }
+    // ----------------------------------
+
     if (currentSong) this.songService.updateSong(currentSong.id, songData);
     else this.songService.addSong(songData);
-    this.closeModal(); this.triggerToast();
+    
+    this.closeModal(); 
+    this.triggerToast();
   }
 
   confirmDelete(song: Song) { if (confirm(`Tem certeza que deseja excluir "${song.title}"?`)) { this.songService.deleteSong(song.id); this.triggerToast(); } }
