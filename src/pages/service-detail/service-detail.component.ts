@@ -155,19 +155,16 @@ export class ServiceDetailComponent implements OnInit {
   isModalOpen = signal(false);
   cultoId = signal<string>('');
 
-  // Pega o culto específico baseado no ID da URL
   culto = computed(() => 
     this.songService.cultos().find(c => c.id === this.cultoId())
   );
 
-  // Pega a lista completa de detalhes das músicas desse culto
   currentSongs = computed(() => {
     const c = this.culto();
     if (!c || !c.songIds) return [];
-    // Mapeia os IDs para os objetos de música reais, mantendo a ordem do array songIds
     return c.songIds
       .map(id => this.songService.songs().find(s => s.id === id))
-      .filter((s): s is Song => !!s); // Remove undefined se alguma música tiver sido excluída
+      .filter((s): s is Song => !!s);
   });
 
   ngOnInit() {
@@ -178,8 +175,12 @@ export class ServiceDetailComponent implements OnInit {
     });
   }
 
-  async addSong(songId: string) {
-    if (!this.cultoId()) return;
+  // 👇 CORREÇÃO AQUI: Mudamos de (songId: string) para (event: any)
+  async addSong(event: any) {
+    const songId = event as string; // Forçamos o TypeScript a entender que é uma string
+    
+    if (!this.cultoId() || !songId) return;
+    
     try {
       await this.songService.addSongToCulto(this.cultoId(), songId);
       this.isModalOpen.set(false);
@@ -196,24 +197,18 @@ export class ServiceDetailComponent implements OnInit {
     }
   }
 
-  // --- NOVA FUNÇÃO DE REORDENAR ---
   async moveSong(index: number, direction: number) {
     const culto = this.culto();
     if (!culto || !culto.songIds) return;
 
     const newIndex = index + direction;
-    // Proteção extra para não sair dos limites
     if (newIndex < 0 || newIndex >= culto.songIds.length) return;
 
-    // Cria uma cópia da lista atual de IDs
     const newSongIds = [...culto.songIds];
-    
-    // Troca os itens de lugar (Magia do Array)
     const temp = newSongIds[index];
     newSongIds[index] = newSongIds[newIndex];
     newSongIds[newIndex] = temp;
 
-    // Salva no banco de dados
     try {
       await this.songService.updateCulto(culto.id, { songIds: newSongIds });
     } catch (error) {
