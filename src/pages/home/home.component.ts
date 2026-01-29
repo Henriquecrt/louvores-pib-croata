@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy, signal, inject, OnInit } from '@ang
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
-import { NotificationService } from '../../services/notification.service'; // <--- Importando o serviço
+import { NotificationService } from '../../services/notification.service'; // <--- IMPORTANTE
 
 @Component({
   selector: 'app-home',
@@ -42,8 +42,8 @@ import { NotificationService } from '../../services/notification.service'; // <-
           </div>
           
           <div class="hidden md:flex items-center gap-4">
-            <button (click)="enableNotifications()" class="inline-flex items-center gap-2 justify-center rounded-lg bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 shadow-sm hover:bg-blue-100 transition-all duration-200 cursor-pointer border border-blue-200" title="Receber Avisos">
-               <span class="material-symbols-outlined text-lg">notifications</span>
+            <button (click)="enableNotifications()" class="inline-flex items-center gap-2 justify-center rounded-lg bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 shadow-sm hover:bg-blue-100 transition-all duration-200 cursor-pointer border border-blue-200" title="Receber novidades">
+               <span class="material-symbols-outlined text-lg">notifications_active</span>
                Avisos
             </button>
 
@@ -68,9 +68,9 @@ import { NotificationService } from '../../services/notification.service'; // <-
                    <span class="material-symbols-outlined">download</span> Instalar Aplicativo
                 </button>
               }
-              
+
               <button (click)="enableNotifications(); toggleMobileMenu()" class="w-full p-3 mb-2 rounded-xl bg-blue-50 text-blue-700 font-bold text-center border border-blue-200 flex items-center justify-center gap-2 shadow-sm">
-                  <span class="material-symbols-outlined">notifications</span> Ativar Notificações
+                  <span class="material-symbols-outlined">notifications_active</span> Ativar Notificações
               </button>
 
               <a routerLink="/" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-primary font-bold transition-colors">Início</a>
@@ -141,63 +141,25 @@ import { NotificationService } from '../../services/notification.service'; // <-
                 
                 <div class="absolute inset-0 flex items-center justify-center p-4 overflow-hidden">
                   <div class="grid grid-cols-3 gap-4 md:gap-6 min-w-[700px] md:min-w-0 md:w-full max-w-4xl scale-[0.42] md:scale-110 origin-center transition-transform">
-                    
                     <div class="flex flex-col gap-3 p-5 bg-white/95 backdrop-blur rounded-xl shadow-xl transform rotate-[-6deg] translate-y-4 hover:rotate-0 transition-transform duration-500 border border-white/20">
-                      <div class="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                        <span class="material-symbols-outlined text-sm">music_note</span>
-                      </div>
-                      <div class="space-y-2">
-                        <div class="h-2 w-16 bg-gray-200 rounded"></div>
-                        <div class="h-4 w-3/4 bg-gray-800 rounded"></div>
-                      </div>
+                      <div class="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary"><span class="material-symbols-outlined text-sm">music_note</span></div>
+                      <div class="space-y-2"><div class="h-2 w-16 bg-gray-200 rounded"></div><div class="h-4 w-3/4 bg-gray-800 rounded"></div></div>
                       <div class="mt-2 h-1 w-full bg-primary rounded-full"></div>
                     </div>
                     
                     <div class="flex flex-col gap-4 p-6 bg-white/100 backdrop-blur-xl rounded-2xl shadow-2xl z-10 border border-gray-100">
-                      <div class="flex items-center justify-between border-b border-gray-100 pb-3">
-                        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Culto de Domingo</span>
-                        <span class="h-2 w-2 rounded-full bg-green-500"></span>
-                      </div>
+                      <div class="flex items-center justify-between border-b border-gray-100 pb-3"><span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Culto de Domingo</span><span class="h-2 w-2 rounded-full bg-green-500"></span></div>
                       <div class="space-y-3">
-                        <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
-                          <span class="text-gray-400 font-mono text-xs">01</span>
-                          <div class="flex-1">
-                            <div class="text-sm font-bold text-gray-800">Grande é o Senhor</div>
-                            <div class="text-xs text-gray-500">Tom: G</div>
-                          </div>
-                          <span class="material-symbols-outlined text-gray-400 text-sm">drag_handle</span>
-                        </div>
-                        <div class="flex items-center gap-3 p-2 rounded-lg bg-primary/5 border border-primary/10 cursor-pointer">
-                          <span class="text-primary font-mono text-xs">02</span>
-                          <div class="flex-1">
-                            <div class="text-sm font-bold text-gray-800">Caminho no Deserto</div>
-                            <div class="text-xs text-primary">Tom: A • Ativo</div>
-                          </div>
-                          <span class="material-symbols-outlined text-primary text-sm">equalizer</span>
-                        </div>
-                        <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
-                          <span class="text-gray-400 font-mono text-xs">03</span>
-                          <div class="flex-1">
-                            <div class="text-sm font-bold text-gray-800">Bondade de Deus</div>
-                            <div class="text-xs text-gray-500">Tom: D</div>
-                          </div>
-                          <span class="material-symbols-outlined text-gray-400 text-sm">drag_handle</span>
-                        </div>
+                        <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"><span class="text-gray-400 font-mono text-xs">01</span><div class="flex-1"><div class="text-sm font-bold text-gray-800">Grande é o Senhor</div><div class="text-xs text-gray-500">Tom: G</div></div><span class="material-symbols-outlined text-gray-400 text-sm">drag_handle</span></div>
+                        <div class="flex items-center gap-3 p-2 rounded-lg bg-primary/5 border border-primary/10 cursor-pointer"><span class="text-primary font-mono text-xs">02</span><div class="flex-1"><div class="text-sm font-bold text-gray-800">Caminho no Deserto</div><div class="text-xs text-primary">Tom: A • Ativo</div></div><span class="material-symbols-outlined text-primary text-sm">equalizer</span></div>
+                        <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"><span class="text-gray-400 font-mono text-xs">03</span><div class="flex-1"><div class="text-sm font-bold text-gray-800">Bondade de Deus</div><div class="text-xs text-gray-500">Tom: D</div></div><span class="material-symbols-outlined text-gray-400 text-sm">drag_handle</span></div>
                       </div>
                     </div>
                     
                     <div class="flex flex-col gap-3 p-5 bg-white/95 backdrop-blur rounded-xl shadow-xl transform rotate-[6deg] translate-y-4 hover:rotate-0 transition-transform duration-500 border border-white/20">
-                      <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                        <span class="material-symbols-outlined text-sm">group</span>
-                      </div>
-                      <div class="space-y-2">
-                        <div class="h-2 w-12 bg-gray-200 rounded"></div>
-                        <div class="h-4 w-2/3 bg-gray-800 rounded"></div>
-                      </div>
-                      <div class="mt-2 flex -space-x-2">
-                        <div class="h-6 w-6 rounded-full bg-gray-300 border-2 border-white"></div>
-                        <div class="h-6 w-6 rounded-full bg-gray-400 border-2 border-white"></div>
-                      </div>
+                      <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600"><span class="material-symbols-outlined text-sm">group</span></div>
+                      <div class="space-y-2"><div class="h-2 w-12 bg-gray-200 rounded"></div><div class="h-4 w-2/3 bg-gray-800 rounded"></div></div>
+                      <div class="mt-2 flex -space-x-2"><div class="h-6 w-6 rounded-full bg-gray-300 border-2 border-white"></div><div class="h-6 w-6 rounded-full bg-gray-400 border-2 border-white"></div></div>
                     </div>
                   </div>
                 </div>
@@ -272,19 +234,17 @@ import { NotificationService } from '../../services/notification.service'; // <-
 export class HomeComponent implements OnInit {
   auth = inject(AuthService);
   router = inject(Router);
-  notificationService = inject(NotificationService); // <--- Injetando o serviço de notificações
+  notificationService = inject(NotificationService); // <--- INJEÇÃO DO SERVIÇO
   
   isMobileMenuOpen = signal(false);
   deferredPrompt: any = null;
 
   constructor() {
-    // GARANTE QUE O MODO CLARO ESTEJA ATIVO
     document.documentElement.classList.remove('dark');
     localStorage.removeItem('theme'); 
   }
 
   ngOnInit() {
-    // Captura o evento de instalação para mostrar o nosso botão
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       this.deferredPrompt = e;
@@ -300,7 +260,7 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  // <--- NOVA FUNÇÃO: Chamada pelo botão no HTML
+  // <--- NOVA FUNÇÃO PARA O BOTÃO
   enableNotifications() {
     this.notificationService.requestPermission();
   }
