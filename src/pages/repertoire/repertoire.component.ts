@@ -257,6 +257,17 @@ export class RepertoireComponent {
     return `${d}/${m}/${y}`;
   }
 
+  // --- FUNÇÃO AUXILIAR DE LIMPEZA ---
+  // Remove acentos e espaços extras (ex: "CORAÇÃO " vira "CORACAO")
+  normalizeText(text: string): string {
+    return text
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+      .trim()
+      .toUpperCase();
+  }
+  // ----------------------------------
+
   openAddModal() { this.editingSong.set(null); this.isModalOpen.set(true); }
   openEditModal(song: Song) { this.editingSong.set(song); this.isModalOpen.set(true); }
   closeModal() { this.isModalOpen.set(false); this.editingSong.set(null); }
@@ -264,27 +275,33 @@ export class RepertoireComponent {
   onSaveSong(songData: any) {
     const currentSong = this.editingSong();
     
-    // --- CONVERSÃO PARA MAIÚSCULO (AGORA COM O TOM TAMBÉM) ---
+    // Converte para maiúsculo para salvar bonito no banco
     const upperTitle = songData.title.trim().toUpperCase();
     const upperArtist = songData.artist ? songData.artist.trim().toUpperCase() : '';
-    const upperKey = songData.key ? songData.key.trim().toUpperCase() : ''; // <-- AQUI
+    const upperKey = songData.key ? songData.key.trim().toUpperCase() : '';
 
-    // Cria um novo objeto com os dados em maiúsculo
     const normalizedData = {
       ...songData,
       title: upperTitle,
       artist: upperArtist,
-      key: upperKey // Salva o tom padronizado
+      key: upperKey
     };
 
-    // --- VERIFICAÇÃO DE DUPLICIDADE ---
+    // --- VERIFICAÇÃO DE DUPLICIDADE (AGORA IGNORANDO ACENTOS) ---
     if (!currentSong) {
-      const exists = this.songService.songs().some(song => 
-        song.title.toUpperCase() === upperTitle
-      );
+      // 1. Limpa o texto que o usuário digitou (remove acento)
+      const inputLimpo = this.normalizeText(upperTitle);
+      console.log('Tentando salvar:', inputLimpo);
+
+      // 2. Compara com cada música do banco (também limpando o acento delas)
+      const exists = this.songService.songs().some(song => {
+        const bancoLimpo = this.normalizeText(song.title);
+        // console.log(`Comparando com: ${bancoLimpo}`); // Descomente se precisar debugar muito
+        return bancoLimpo === inputLimpo;
+      });
 
       if (exists) {
-        alert(`⚠️ Atenção: A música "${upperTitle}" já está cadastrada no sistema!\n\nPor favor, verifique a lista.`);
+        alert(`⚠️ Atenção: A música "${upperTitle}" já está cadastrada no sistema!\n\n(Verificamos que já existe um título igual ou muito parecido).`);
         return; 
       }
     }
