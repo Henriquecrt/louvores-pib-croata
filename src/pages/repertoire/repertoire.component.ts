@@ -49,10 +49,10 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
                   <div (click)="viewSong(song)" class="bg-white dark:bg-[#1a2e1a] p-3 rounded-xl border border-orange-100 dark:border-orange-500/20 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col items-center text-center group relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-400 to-red-500"></div>
                     <span class="text-xs font-bold text-orange-500 mb-1">{{ song.views }}x</span>
-                    <div class="font-bold text-gray-800 dark:text-gray-200 text-sm line-clamp-2 leading-tight mb-1 group-hover:text-orange-500 transition-colors">
+                    <div class="font-bold text-gray-800 dark:text-gray-200 text-sm line-clamp-2 leading-tight mb-1 group-hover:text-orange-500 transition-colors uppercase">
                       {{ song.title }}
                     </div>
-                    <div class="text-[10px] text-gray-400">{{ song.artist }}</div>
+                    <div class="text-[10px] text-gray-400 uppercase">{{ song.artist }}</div>
                   </div>
                 }
               </div>
@@ -81,8 +81,8 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
                 <div class="mb-4 cursor-pointer" (click)="viewSong(song)">
                   <div class="flex justify-between items-start mb-3">
                     <div class="flex flex-col max-w-[70%]">
-                      <h3 class="text-[#101810] dark:text-white text-xl font-bold leading-tight truncate">{{ song.title }}</h3>
-                      <div class="flex items-center gap-1 mt-1 text-sm font-medium text-primary">
+                      <h3 class="text-[#101810] dark:text-white text-xl font-bold leading-tight truncate uppercase">{{ song.title }}</h3>
+                      <div class="flex items-center gap-1 mt-1 text-sm font-medium text-primary uppercase">
                         <span class="material-symbols-outlined text-[16px]">mic</span>
                         <span class="truncate">{{ song.artist }}</span>
                       </div>
@@ -156,10 +156,10 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
               
               <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-white/5">
                 <div class="flex flex-col">
-                  <h2 class="text-2xl font-bold text-gray-900 dark:text-white leading-tight">{{ song.title }}</h2>
+                  <h2 class="text-2xl font-bold text-gray-900 dark:text-white leading-tight uppercase">{{ song.title }}</h2>
                   
                   <div class="flex flex-wrap items-center gap-3 mt-2">
-                    <span class="text-primary font-medium flex items-center gap-1">
+                    <span class="text-primary font-medium flex items-center gap-1 uppercase">
                       <span class="material-symbols-outlined text-[18px]">mic</span> {{ song.artist }}
                     </span>
                     
@@ -264,25 +264,34 @@ export class RepertoireComponent {
   onSaveSong(songData: any) {
     const currentSong = this.editingSong();
     
+    // --- CONVERSÃO PARA MAIÚSCULO (AGORA COM O TOM TAMBÉM) ---
+    const upperTitle = songData.title.trim().toUpperCase();
+    const upperArtist = songData.artist ? songData.artist.trim().toUpperCase() : '';
+    const upperKey = songData.key ? songData.key.trim().toUpperCase() : ''; // <-- AQUI
+
+    // Cria um novo objeto com os dados em maiúsculo
+    const normalizedData = {
+      ...songData,
+      title: upperTitle,
+      artist: upperArtist,
+      key: upperKey // Salva o tom padronizado
+    };
+
     // --- VERIFICAÇÃO DE DUPLICIDADE ---
-    // Se NÃO estiver editando (é música nova), verifica se já existe
     if (!currentSong) {
-      const titleToCheck = songData.title.trim().toLowerCase();
-      
-      // Verifica no array de músicas (que já está carregado) se existe alguma com o mesmo título
       const exists = this.songService.songs().some(song => 
-        song.title.toLowerCase().trim() === titleToCheck
+        song.title.toUpperCase() === upperTitle
       );
 
       if (exists) {
-        alert(`⚠️ Atenção: A música "${songData.title}" já está cadastrada no sistema!\n\nPor favor, verifique a lista ou use outro nome para diferenciar.`);
-        return; // Interrompe a função, não salva nada
+        alert(`⚠️ Atenção: A música "${upperTitle}" já está cadastrada no sistema!\n\nPor favor, verifique a lista.`);
+        return; 
       }
     }
     // ----------------------------------
 
-    if (currentSong) this.songService.updateSong(currentSong.id, songData);
-    else this.songService.addSong(songData);
+    if (currentSong) this.songService.updateSong(currentSong.id, normalizedData);
+    else this.songService.addSong(normalizedData);
     
     this.closeModal(); 
     this.triggerToast();
