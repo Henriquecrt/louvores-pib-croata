@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject, OnInit } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
@@ -14,9 +14,7 @@ import { AuthService } from '../../services/auth.service';
       <header class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-primary/10 px-4 sm:px-10 py-3 transition-all duration-300">
         <div class="mx-auto max-w-7xl flex items-center justify-between">
           <div class="flex items-center gap-4">
-            
             <img src="logo.png" alt="Logo PIB" class="h-20 md:h-24 w-auto object-contain hover:scale-105 transition-transform drop-shadow-sm py-1 cursor-pointer" routerLink="/">
-            
             <div class="flex flex-col leading-tight justify-center">
               <h2 class="text-primary text-xl font-black tracking-tight cursor-pointer" routerLink="/">PIB CROATÁ</h2>
               <span class="text-[11px] text-gray-500 font-bold tracking-widest uppercase">Ministério de Louvor</span>
@@ -32,12 +30,24 @@ import { AuthService } from '../../services/auth.service';
           </nav>
           
           <div class="flex items-center gap-2 md:hidden">
+            @if (deferredPrompt) {
+              <button (click)="installPwa()" class="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors focus:outline-none animate-pulse border border-green-200 shadow-sm">
+                <span class="material-symbols-outlined">download</span>
+              </button>
+            }
             <button (click)="toggleMobileMenu()" class="flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 transition-colors focus:outline-none">
               <span class="material-symbols-outlined">{{ isMobileMenuOpen() ? 'close' : 'menu' }}</span>
             </button>
           </div>
           
           <div class="hidden md:flex items-center gap-4">
+            @if (deferredPrompt) {
+              <button (click)="installPwa()" class="inline-flex items-center gap-2 justify-center rounded-lg bg-green-50 px-4 py-2 text-sm font-bold text-green-700 shadow-sm hover:bg-green-100 transition-all duration-200 cursor-pointer border border-green-200">
+                <span class="material-symbols-outlined text-lg">download</span>
+                Instalar App
+              </button>
+            }
+
             <button (click)="handleAuth()" class="inline-flex items-center justify-center rounded-lg bg-gray-900 px-5 py-2 text-sm font-bold text-white shadow-sm hover:opacity-90 transition-all duration-200 cursor-pointer">
               {{ auth.currentUser() ? 'Sair' : 'Área da Liderança' }}
             </button>
@@ -47,6 +57,11 @@ import { AuthService } from '../../services/auth.service';
         @if (isMobileMenuOpen()) {
           <div class="md:hidden absolute top-full left-0 right-0 bg-white border-b border-primary/10 shadow-xl animate-[slideIn_0.2s_ease-out]">
             <nav class="flex flex-col p-4 gap-2">
+              @if (deferredPrompt) {
+                <button (click)="installPwa()" class="w-full p-3 mb-2 rounded-xl bg-green-50 text-green-700 font-bold text-center border border-green-200 flex items-center justify-center gap-2 shadow-sm">
+                   <span class="material-symbols-outlined">download</span> Instalar Aplicativo
+                </button>
+              }
               <a routerLink="/" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-primary font-bold transition-colors">Início</a>
               <a routerLink="/services" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-gray-600 hover:text-primary transition-colors">Cultos</a>
               <a routerLink="/repertoire" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-gray-600 hover:text-primary transition-colors">Repertório</a>
@@ -243,16 +258,34 @@ import { AuthService } from '../../services/auth.service';
     </div>
   `
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit {
   auth = inject(AuthService);
   router = inject(Router);
   
   isMobileMenuOpen = signal(false);
+  deferredPrompt: any = null;
 
   constructor() {
     // GARANTE QUE O MODO CLARO ESTEJA ATIVO
     document.documentElement.classList.remove('dark');
-    localStorage.removeItem('theme'); // Limpa qualquer preferência salva
+    localStorage.removeItem('theme'); 
+  }
+
+  ngOnInit() {
+    // Captura o evento de instalação para mostrar o nosso botão
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      this.deferredPrompt = e;
+    });
+  }
+
+  installPwa() {
+    if (this.deferredPrompt) {
+      this.deferredPrompt.prompt();
+      this.deferredPrompt.userChoice.then((choiceResult: any) => {
+        this.deferredPrompt = null;
+      });
+    }
   }
 
   handleAuth() {
