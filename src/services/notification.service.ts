@@ -18,29 +18,38 @@ export class NotificationService {
   }
 
   async requestPermission() {
-    console.log('🔔 Solicitando permissão (Modo Público)...');
+    // Alert 1: Saber se a função começou
+    alert('🔄 Iniciando pedido de permissão...'); 
     
     try {
       const permission = await Notification.requestPermission();
       
       if (permission === 'granted') {
+        // Alert 2: Permissão dada, tentando pegar token
+        alert('✅ Permissão concedida! Gerando token...');
+        
         // --- SUA CHAVE VAPID ---
         const vapidKey = 'BPDqHjlPQvo6dscJcPoKVwJNM3hnCrL3WRCLmPZVMSIK4dqMXmbJVvAfGlR_JWcYxlmeBqwmif6wyC-PZzSAp7E'; 
 
         const token = await getToken(this.messaging, { vapidKey });
         
         if (token) {
-          console.log('🎟️ Token gerado:', token);
+          // Alert 3: Token gerado, tentando salvar
+          alert('🎟️ Token gerado! Salvando no banco...');
           await this.saveTokenPublicly(token);
+        } else {
+          alert('⚠️ Ocorreu um erro estranho: Token veio vazio.');
         }
         
         return token;
       } else {
-        alert('Você negou a permissão. Para ativar, acesse as configurações do navegador.');
+        alert('🚫 Você negou a permissão (ou o iPhone bloqueou). Verifique os Ajustes > Notificações.');
         return null;
       }
-    } catch (error) {
-      console.error('❌ Erro ao ativar:', error);
+    } catch (error: any) {
+      // Alert DE ERRO: Aqui vamos descobrir o problema
+      console.error('Erro ao ativar:', error);
+      alert('❌ ERRO TÉCNICO: ' + (error.message || error));
       return null;
     }
   }
@@ -52,31 +61,26 @@ export class NotificationService {
     });
   }
 
-  // --- NOVA FUNÇÃO: Salva qualquer pessoa (Logada ou Não) ---
   private async saveTokenPublicly(token: string) {
     try {
-      // Usa o próprio token como ID para evitar duplicatas
       const subscriberRef = doc(this.firestore, 'subscribers', token);
-      
       const user = this.auth.currentUser;
       
       const data = {
         token: token,
         updatedAt: new Date().toISOString(),
-        // Se estiver logado, salva quem é. Se não, salva como "Anônimo"
         userUid: user ? user.uid : 'anonimo',
         deviceType: this.getDeviceType()
       };
 
-      // setDoc com merge: true cria ou atualiza sem apagar
       await setDoc(subscriberRef, data, { merge: true });
       
-      console.log('💾 Token salvo na lista pública de inscritos!');
-      alert('✅ Avisos Ativados com Sucesso!\nVocê receberá as notificações da igreja.');
+      // SUCESSO FINAL
+      alert('✅ TUDO CERTO! Você foi registrado no banco de dados.');
       
-    } catch (error) {
-      console.error('Erro ao salvar token no banco:', error);
-      // Se der erro de permissão, é provável que precise ajustar as regras do Firestore
+    } catch (error: any) {
+      console.error('Erro no banco:', error);
+      alert('❌ ERRO NO BANCO DE DADOS: ' + (error.message || error));
     }
   }
 
