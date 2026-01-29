@@ -18,52 +18,72 @@ export class NotificationService {
   }
 
   async requestPermission() {
-    console.log('🔔 Solicitando permissão para notificações...');
+    console.log('🔔 Solicitando permissão (Modo Público)...');
     
     try {
       const permission = await Notification.requestPermission();
       
       if (permission === 'granted') {
-        console.log('✅ Permissão concedida!');
-        
-        // --- SUA CHAVE VAPID CONFIGURADA AQUI ---
+        // --- SUA CHAVE VAPID ---
         const vapidKey = 'BPDqHjlPQvo6dscJcPoKVwJNM3hnCrL3WRCLmPZVMSIK4dqMXmbJVvAfGlR_JWcYxlmeBqwmif6wyC-PZzSAp7E'; 
 
         const token = await getToken(this.messaging, { vapidKey });
-        console.log('🎟️ Token do dispositivo:', token);
         
         if (token) {
-          await this.saveTokenToUser(token);
+          console.log('🎟️ Token gerado:', token);
+          await this.saveTokenPublicly(token);
         }
         
         return token;
       } else {
-        console.log('🚫 Permissão negada');
+        alert('Você negou a permissão. Para ativar, acesse as configurações do navegador.');
         return null;
       }
     } catch (error) {
-      console.error('❌ Erro ao ativar notificações:', error);
+      console.error('❌ Erro ao ativar:', error);
       return null;
     }
   }
 
   listenForMessages() {
     onMessage(this.messaging, (payload) => {
-      console.log('📩 Nova mensagem recebida (App Aberto):', payload);
+      console.log('📩 Mensagem recebida:', payload);
       this.currentMessage.set(payload);
-      
-      // Exemplo: Disparar um alerta simples se quiser
-      // alert(payload.notification?.title + ': ' + payload.notification?.body);
     });
   }
 
-  private async saveTokenToUser(token: string) {
-    const user = this.auth.currentUser;
-    if (user) {
-      // Salva o token no documento do usuário (coleção 'users')
-      const userRef = doc(this.firestore, 'users', user.uid);
-      await setDoc(userRef, { fcmToken: token }, { merge: true });
-      console.log('💾 Token salvo no perfil do usuário!');
+  // --- NOVA FUNÇÃO: Salva qualquer pessoa (Logada ou Não) ---
+  private async saveTokenPublicly(token: string) {
+    try {
+      // Usa o próprio token como ID para evitar duplicatas
+      const subscriberRef = doc(this.firestore, 'subscribers', token);
+      
+      const user = this.auth.currentUser;
+      
+      const data = {
+        token: token,
+        updatedAt: new Date().toISOString(),
+        // Se estiver logado, salva quem é. Se não, salva como "Anônimo"
+        userUid: user ? user.uid : 'anonimo',
+        deviceType: this.getDeviceType()
+      };
+
+      // setDoc com merge: true cria ou atualiza sem apagar
+      await setDoc(subscriberRef, data, { merge: true });
+      
+      console.log('💾 Token salvo na lista pública de inscritos!');
+      alert('✅ Avisos Ativados com Sucesso!\nVocê receberá as notificações da igreja.');
+      
+    } catch (error) {
+      console.error('Erro ao salvar token no banco:', error);
+      // Se der erro de permissão, é provável que precise ajustar as regras do Firestore
     }
+  }
+
+  private getDeviceType() {
+    const ua = navigator.userAgent;
+    if (/Android/i.test(ua)) return 'Android';
+    if (/iPhone|iPad|iPod/i.test(ua)) return 'iOS';
+    return 'Desktop';
   }
 }
