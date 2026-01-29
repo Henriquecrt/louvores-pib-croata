@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy, signal, inject, OnInit } from '@ang
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
-import { NotificationService } from '../../services/notification.service'; // <--- IMPORTANTE
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-home',
@@ -234,10 +234,14 @@ import { NotificationService } from '../../services/notification.service'; // <-
 export class HomeComponent implements OnInit {
   auth = inject(AuthService);
   router = inject(Router);
-  notificationService = inject(NotificationService); // <--- INJEÇÃO DO SERVIÇO
+  notificationService = inject(NotificationService);
   
   isMobileMenuOpen = signal(false);
   deferredPrompt: any = null;
+
+  // DETECTAR SE É IPHONE (iOS) E SE ESTÁ INSTALADO
+  isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+  isStandalone = window.matchMedia('(display-mode: standalone)').matches;
 
   constructor() {
     document.documentElement.classList.remove('dark');
@@ -260,8 +264,15 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  // <--- NOVA FUNÇÃO PARA O BOTÃO
+  // --- FUNÇÃO ATUALIZADA COM A REGRA DO IPHONE ---
   enableNotifications() {
+    // 1. Verifica se é iPhone e NÃO está instalado
+    if (this.isIOS && !this.isStandalone) {
+      alert('⚠️ No iPhone, você precisa instalar o App primeiro!\n\n1. Toque no botão "Compartilhar" (quadrado com seta) do navegador.\n2. Escolha "Adicionar à Tela de Início".\n3. Abra o app novo que apareceu e tente de novo.');
+      return; // Para tudo por aqui
+    }
+
+    // 2. Se for Android, PC ou iPhone já instalado, segue a vida
     this.notificationService.requestPermission();
   }
 
