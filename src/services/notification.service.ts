@@ -18,38 +18,32 @@ export class NotificationService {
   }
 
   async requestPermission() {
-    // Alert 1: Saber se a função começou
-    alert('🔄 Iniciando pedido de permissão...'); 
-    
     try {
+      // 1. Pede permissão direto ao navegador (sem avisos antes)
       const permission = await Notification.requestPermission();
       
       if (permission === 'granted') {
-        // Alert 2: Permissão dada, tentando pegar token
-        alert('✅ Permissão concedida! Gerando token...');
         
         // --- SUA CHAVE VAPID ---
         const vapidKey = 'BPDqHjlPQvo6dscJcPoKVwJNM3hnCrL3WRCLmPZVMSIK4dqMXmbJVvAfGlR_JWcYxlmeBqwmif6wyC-PZzSAp7E'; 
 
+        // 2. Pega o token silenciosamente
         const token = await getToken(this.messaging, { vapidKey });
         
         if (token) {
-          // Alert 3: Token gerado, tentando salvar
-          alert('🎟️ Token gerado! Salvando no banco...');
+          // 3. Salva no banco silenciosamente
           await this.saveTokenPublicly(token);
-        } else {
-          alert('⚠️ Ocorreu um erro estranho: Token veio vazio.');
         }
         
         return token;
       } else {
-        alert('🚫 Você negou a permissão (ou o iPhone bloqueou). Verifique os Ajustes > Notificações.');
+        // Só avisa se a pessoa negar
+        alert('Para receber avisos, você precisa permitir as notificações nas configurações do seu navegador.');
         return null;
       }
-    } catch (error: any) {
-      // Alert DE ERRO: Aqui vamos descobrir o problema
-      console.error('Erro ao ativar:', error);
-      alert('❌ ERRO TÉCNICO: ' + (error.message || error));
+    } catch (error) {
+      console.error('Erro ao ativar notificações:', error);
+      // Opcional: só mostre erro se for algo crítico
       return null;
     }
   }
@@ -75,12 +69,11 @@ export class NotificationService {
 
       await setDoc(subscriberRef, data, { merge: true });
       
-      // SUCESSO FINAL
-      alert('✅ TUDO CERTO! Você foi registrado no banco de dados.');
+      // 4. O ÚNICO ALERTA QUE VAI APARECER: SUCESSO!
+      alert('✅ Notificações ativadas! Agora você receberá os avisos da igreja.');
       
-    } catch (error: any) {
-      console.error('Erro no banco:', error);
-      alert('❌ ERRO NO BANCO DE DADOS: ' + (error.message || error));
+    } catch (error) {
+      console.error('Erro ao salvar no banco:', error);
     }
   }
 
