@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, signal, inject, OnInit } from '@ang
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { NotificationService } from '../../services/notification.service'; // <--- Importando o serviço
 
 @Component({
   selector: 'app-home',
@@ -41,6 +42,11 @@ import { AuthService } from '../../services/auth.service';
           </div>
           
           <div class="hidden md:flex items-center gap-4">
+            <button (click)="enableNotifications()" class="inline-flex items-center gap-2 justify-center rounded-lg bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 shadow-sm hover:bg-blue-100 transition-all duration-200 cursor-pointer border border-blue-200" title="Receber Avisos">
+               <span class="material-symbols-outlined text-lg">notifications</span>
+               Avisos
+            </button>
+
             @if (deferredPrompt) {
               <button (click)="installPwa()" class="inline-flex items-center gap-2 justify-center rounded-lg bg-green-50 px-4 py-2 text-sm font-bold text-green-700 shadow-sm hover:bg-green-100 transition-all duration-200 cursor-pointer border border-green-200">
                 <span class="material-symbols-outlined text-lg">download</span>
@@ -62,6 +68,11 @@ import { AuthService } from '../../services/auth.service';
                    <span class="material-symbols-outlined">download</span> Instalar Aplicativo
                 </button>
               }
+              
+              <button (click)="enableNotifications(); toggleMobileMenu()" class="w-full p-3 mb-2 rounded-xl bg-blue-50 text-blue-700 font-bold text-center border border-blue-200 flex items-center justify-center gap-2 shadow-sm">
+                  <span class="material-symbols-outlined">notifications</span> Ativar Notificações
+              </button>
+
               <a routerLink="/" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-primary font-bold transition-colors">Início</a>
               <a routerLink="/services" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-gray-600 hover:text-primary transition-colors">Cultos</a>
               <a routerLink="/repertoire" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-gray-600 hover:text-primary transition-colors">Repertório</a>
@@ -261,6 +272,7 @@ import { AuthService } from '../../services/auth.service';
 export class HomeComponent implements OnInit {
   auth = inject(AuthService);
   router = inject(Router);
+  notificationService = inject(NotificationService); // <--- Injetando o serviço de notificações
   
   isMobileMenuOpen = signal(false);
   deferredPrompt: any = null;
@@ -286,6 +298,11 @@ export class HomeComponent implements OnInit {
         this.deferredPrompt = null;
       });
     }
+  }
+
+  // <--- NOVA FUNÇÃO: Chamada pelo botão no HTML
+  enableNotifications() {
+    this.notificationService.requestPermission();
   }
 
   handleAuth() {

@@ -1,52 +1,69 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { Messaging, getToken, onMessage } from '@angular/fire/messaging';
-import { inject as injectAuth } from '@angular/core'; // Ajuste conforme seu projeto
+import { Firestore, doc, setDoc } from '@angular/fire/firestore';
+import { Auth } from '@angular/fire/auth';
 
 @Injectable({
   providedIn: 'root'
 })
 export class NotificationService {
   private messaging = inject(Messaging);
-  
-  // Chave VAPID (Você pega isso no Console do Firebase > Engajamento > Cloud Messaging)
-  private vapidKey = 'SUA_CHAVE_VAPID_DO_FIREBASE_CONSOLE';
+  private firestore = inject(Firestore);
+  private auth = inject(Auth);
+
+  currentMessage = signal<any>(null);
 
   constructor() {
-    this.listenToMessages();
+    this.listenForMessages();
   }
 
   async requestPermission() {
-    console.log('Pedindo permissão...');
+    console.log('🔔 Solicitando permissão para notificações...');
+    
     try {
       const permission = await Notification.requestPermission();
       
       if (permission === 'granted') {
-        console.log('Permissão concedida!');
+        console.log('✅ Permissão concedida!');
         
-        // Pega o TOKEN único deste celular
-        const token = await getToken(this.messaging, { vapidKey: this.vapidKey });
-        console.log('Token do dispositivo:', token);
+        // --- SUA CHAVE VAPID CONFIGURADA AQUI ---
+        const vapidKey = 'BPDqHjlPQvo6dscJcPoKVwJNM3hnCrL3WRCLmPZVMSIK4dqMXmbJVvAfGlR_JWcYxlmeBqwmif6wyC-PZzSAp7E'; 
+
+        const token = await getToken(this.messaging, { vapidKey });
+        console.log('🎟️ Token do dispositivo:', token);
         
-        // AQUI VOCÊ SALVARIA ESSE TOKEN NO BANCO DE DADOS
-        // Ex: updateDoc(userRef, { fcmToken: token });
+        if (token) {
+          await this.saveTokenToUser(token);
+        }
         
         return token;
       } else {
-        console.log('Permissão negada');
+        console.log('🚫 Permissão negada');
         return null;
       }
     } catch (error) {
-      console.error('Erro ao pegar permissão', error);
+      console.error('❌ Erro ao ativar notificações:', error);
       return null;
     }
   }
 
-  // Escuta mensagens quando o app está ABERTO na tela
-  listenToMessages() {
+  listenForMessages() {
     onMessage(this.messaging, (payload) => {
-      console.log('Mensagem recebida com app aberto:', payload);
-      // Aqui você pode disparar um Toast (aquele verde que criamos)
-      // Ex: toast.show(payload.notification.title, payload.notification.body)
+      console.log('📩 Nova mensagem recebida (App Aberto):', payload);
+      this.currentMessage.set(payload);
+      
+      // Exemplo: Disparar um alerta simples se quiser
+      // alert(payload.notification?.title + ': ' + payload.notification?.body);
     });
+  }
+
+  private async saveTokenToUser(token: string) {
+    const user = this.auth.currentUser;
+    if (user) {
+      // Salva o token no documento do usuário (coleção 'users')
+      const userRef = doc(this.firestore, 'users', user.uid);
+      await setDoc(userRef, { fcmToken: token }, { merge: true });
+      console.log('💾 Token salvo no perfil do usuário!');
+    }
   }
 }
