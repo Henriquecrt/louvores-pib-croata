@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { SongService } from '../../services/song.service';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../services/toast.service'; // <--- Importando o Toast
 
 @Component({
   selector: 'app-services-list',
@@ -104,6 +105,11 @@ import { AuthService } from '../../services/auth.service';
                   
                   @if (auth.currentUser()) {
                     <div class="flex items-center gap-1 pl-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      
+                      <button (click)="notifyShortcut(culto)" class="p-2 text-gray-300 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-full transition-colors" title="Notificar Igreja">
+                        <span class="material-symbols-outlined">campaign</span>
+                      </button>
+
                       <button (click)="startEdit(culto)" class="p-2 text-gray-300 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full transition-colors" title="Editar Culto">
                         <span class="material-symbols-outlined">edit</span>
                       </button>
@@ -189,6 +195,7 @@ import { AuthService } from '../../services/auth.service';
 export class ServicesListComponent {
   songService = inject(SongService);
   auth = inject(AuthService);
+  toast = inject(ToastService); // <--- Injetado
   
   editingId = signal<string | null>(null);
   printGroup = signal<any>(null);
@@ -270,23 +277,13 @@ export class ServicesListComponent {
   getWeekDay(dateStr: string) { const date = new Date(dateStr + 'T12:00:00'); return date.toLocaleDateString('pt-BR', { weekday: 'long' }); }
   getSongDetails(id: string) { return this.songService.songs().find(s => s.id === id); }
 
-  // --- NOVA FUNÇÃO DE IMPRESSÃO ---
   printMonth(group: any) {
     this.printGroup.set(group);
-    
-    // 1. Salva o título original da página
     const originalTitle = document.title;
-    
-    // 2. Muda o título para o nome do arquivo (Ex: Escala PIB Croatá - JANEIRO 2026)
     document.title = `Escala PIB Croatá - ${group.monthLabel.toUpperCase()}`;
-
     setTimeout(() => {
         window.print();
-        
-        // 3. Devolve o título original depois que abrir a janela
-        setTimeout(() => {
-            document.title = originalTitle;
-        }, 500);
+        setTimeout(() => { document.title = originalTitle; }, 500);
     }, 100);
   }
   
@@ -315,5 +312,25 @@ export class ServicesListComponent {
         }
     });
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  }
+
+  // --- NOVA FUNÇÃO: NOTIFICAR ---
+  notifyShortcut(culto: any) {
+    const day = this.getDay(culto.date);
+    const monthLabel = new Date(culto.date + 'T12:00:00').toLocaleDateString('pt-BR', { month: 'short' });
+    
+    // Título e Corpo da Notificação
+    const title = `Nova Escala: ${culto.title}`;
+    const body = `📅 ${day} de ${monthLabel} - A lista de louvores já está no App. Confira!`;
+    
+    const textToCopy = `TÍTULO:\n${title}\n\nTEXTO:\n${body}`;
+
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      this.toast.show('Copiado! Cole no Firebase.', 'info');
+      // Abre o console do Firebase em outra aba
+      window.open('https://console.firebase.google.com/project/louvores-gpv/messaging', '_blank');
+    }).catch(err => {
+      this.toast.show('Erro ao copiar.', 'error');
+    });
   }
 }

@@ -1,14 +1,21 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { ToastComponent } from './components/toast.component'; // <--- Importando o componente do Toast
+import { ToastComponent } from './components/toast.component'; // O visual do aviso
+import { NotificationService } from './services/notification.service'; // Para garantir que os avisos cheguem
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, ToastComponent], // <--- Adicionando na lista de imports
+  imports: [RouterOutlet, ToastComponent],
   template: `
-    <app-toast></app-toast> <router-outlet></router-outlet>
+    <app-toast></app-toast> 
+    
+    <router-outlet></router-outlet>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AppComponent {}
+export class AppComponent {
+  // Injetamos o serviço aqui para garantir que o app comece a "escutar" 
+  // notificações assim que for aberto, independente da página.
+  notificationService = inject(NotificationService);
+}
