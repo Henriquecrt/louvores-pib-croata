@@ -2,7 +2,10 @@ import {
   AUTH_ERROR_CODES_MAP_DO_NOT_USE_INTERNALLY,
   ActionCodeOperation,
   ActionCodeURL,
+  Auth,
   AuthCredential,
+  AuthInstances,
+  AuthModule,
   EmailAuthCredential,
   EmailAuthProvider,
   FacebookAuthProvider,
@@ -23,6 +26,8 @@ import {
   TotpSecret,
   TwitterAuthProvider,
   applyActionCode,
+  authInstance$,
+  authState,
   beforeAuthStateChanged,
   browserCookiePersistence,
   browserLocalPersistence,
@@ -41,6 +46,7 @@ import {
   getIdTokenResult,
   getMultiFactorResolver,
   getRedirectResult,
+  idToken,
   inMemoryPersistence,
   indexedDBLocalPersistence,
   initializeAuth,
@@ -55,6 +61,7 @@ import {
   onIdTokenChanged,
   parseActionCodeURL,
   prodErrorMap,
+  provideAuth,
   reauthenticateWithCredential,
   reauthenticateWithPhoneNumber,
   reauthenticateWithPopup,
@@ -81,18 +88,26 @@ import {
   updatePhoneNumber,
   updateProfile,
   useDeviceLanguage,
+  user,
   validatePassword,
   verifyBeforeUpdateEmail,
   verifyPasswordResetCode
-} from "./chunk-NZDP2PSM.js";
+} from "./chunk-GC265UIM.js";
+import "./chunk-NZDP2PSM.js";
 import "./chunk-R3VSPJEB.js";
+import "./chunk-FAAEKLUD.js";
 import "./chunk-BFPGGYID.js";
+import "./chunk-MESIL6CB.js";
+import "./chunk-ZKA2FKSJ.js";
 import "./chunk-GOMI4DH3.js";
 export {
   ActionCodeOperation,
   ActionCodeURL,
+  Auth,
   AuthCredential,
   AUTH_ERROR_CODES_MAP_DO_NOT_USE_INTERNALLY as AuthErrorCodes,
+  AuthInstances,
+  AuthModule,
   EmailAuthCredential,
   EmailAuthProvider,
   FacebookAuthProvider,
@@ -113,6 +128,8 @@ export {
   TotpSecret,
   TwitterAuthProvider,
   applyActionCode,
+  authInstance$,
+  authState,
   beforeAuthStateChanged,
   browserCookiePersistence,
   browserLocalPersistence,
@@ -131,6 +148,7 @@ export {
   getIdTokenResult,
   getMultiFactorResolver,
   getRedirectResult,
+  idToken,
   inMemoryPersistence,
   indexedDBLocalPersistence,
   initializeAuth,
@@ -145,6 +163,7 @@ export {
   onIdTokenChanged,
   parseActionCodeURL,
   prodErrorMap,
+  provideAuth,
   reauthenticateWithCredential,
   reauthenticateWithPhoneNumber,
   reauthenticateWithPopup,
@@ -171,6 +190,7 @@ export {
   updatePhoneNumber,
   updateProfile,
   useDeviceLanguage,
+  user,
   validatePassword,
   verifyBeforeUpdateEmail,
   verifyPasswordResetCode

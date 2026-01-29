@@ -1,5 +1,8 @@
 import {
   DEFAULT_ENTRY_NAME,
+  FirebaseApp,
+  FirebaseAppModule,
+  FirebaseApps,
   FirebaseError,
   SDK_VERSION,
   _addComponent,
@@ -10,27 +13,27 @@ import {
   _getProvider,
   _isFirebaseApp,
   _isFirebaseServerApp,
-  _isFirebaseServerAppSettings,
   _registerComponent,
   _removeServiceInstance,
   _serverApps,
   deleteApp,
-  getApp,
+  firebaseApp$,
+  getApp2 as getApp,
   getApps,
   initializeApp,
   initializeServerApp,
   onLog,
-  registerVersion,
+  provideFirebaseApp,
+  registerVersion2 as registerVersion,
   setLogLevel
-} from "./chunk-R3VSPJEB.js";
+} from "./chunk-FAAEKLUD.js";
 import "./chunk-BFPGGYID.js";
+import "./chunk-ZKA2FKSJ.js";
 import "./chunk-GOMI4DH3.js";
-
-// node_modules/firebase/app/dist/esm/index.esm.js
-var name = "firebase";
-var version = "12.7.0";
-registerVersion(name, version, "app");
 export {
+  FirebaseApp,
+  FirebaseAppModule,
+  FirebaseApps,
   FirebaseError,
   SDK_VERSION,
   DEFAULT_ENTRY_NAME as _DEFAULT_ENTRY_NAME,
@@ -42,17 +45,17 @@ export {
   _getProvider,
   _isFirebaseApp,
   _isFirebaseServerApp,
-  _isFirebaseServerAppSettings,
   _registerComponent,
   _removeServiceInstance,
   _serverApps,
   deleteApp,
+  firebaseApp$,
   getApp,
   getApps,
   initializeApp,
   initializeServerApp,
   onLog,
+  provideFirebaseApp,
   registerVersion,
   setLogLevel
 };
-//# sourceMappingURL=firebase_app.js.map
