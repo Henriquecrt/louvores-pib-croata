@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { Messaging, getToken, onMessage } from '@angular/fire/messaging';
 import { Firestore, doc, setDoc } from '@angular/fire/firestore';
 import { Auth } from '@angular/fire/auth';
+import { ToastService } from './toast.service'; // <--- IMPORTANTE
 
 @Injectable({
   providedIn: 'root'
@@ -10,6 +11,7 @@ export class NotificationService {
   private messaging = inject(Messaging);
   private firestore = inject(Firestore);
   private auth = inject(Auth);
+  private toast = inject(ToastService); // <--- Injetando o Toast
 
   currentMessage = signal<any>(null);
 
@@ -19,31 +21,26 @@ export class NotificationService {
 
   async requestPermission() {
     try {
-      // 1. Pede permissão direto ao navegador (sem avisos antes)
       const permission = await Notification.requestPermission();
       
       if (permission === 'granted') {
-        
-        // --- SUA CHAVE VAPID ---
         const vapidKey = 'BPDqHjlPQvo6dscJcPoKVwJNM3hnCrL3WRCLmPZVMSIK4dqMXmbJVvAfGlR_JWcYxlmeBqwmif6wyC-PZzSAp7E'; 
 
-        // 2. Pega o token silenciosamente
         const token = await getToken(this.messaging, { vapidKey });
         
         if (token) {
-          // 3. Salva no banco silenciosamente
           await this.saveTokenPublicly(token);
         }
         
         return token;
       } else {
-        // Só avisa se a pessoa negar
-        alert('Para receber avisos, você precisa permitir as notificações nas configurações do seu navegador.');
+        // Usa o Toast de Erro
+        this.toast.show('Você precisa permitir as notificações no navegador.', 'error');
         return null;
       }
     } catch (error) {
       console.error('Erro ao ativar notificações:', error);
-      // Opcional: só mostre erro se for algo crítico
+      this.toast.show('Erro técnico ao ativar notificações.', 'error');
       return null;
     }
   }
@@ -52,6 +49,10 @@ export class NotificationService {
     onMessage(this.messaging, (payload) => {
       console.log('📩 Mensagem recebida:', payload);
       this.currentMessage.set(payload);
+      // Opcional: Mostrar um toast quando chegar mensagem com o site aberto
+      if (payload.notification) {
+        this.toast.show(payload.notification.title + ': ' + payload.notification.body, 'info');
+      }
     });
   }
 
@@ -69,8 +70,8 @@ export class NotificationService {
 
       await setDoc(subscriberRef, data, { merge: true });
       
-      // 4. O ÚNICO ALERTA QUE VAI APARECER: SUCESSO!
-      alert('✅ Notificações ativadas! Agora você receberá os avisos da igreja.');
+      // ✅ AQUI ESTÁ A MÁGICA: Toast Bonito em vez de Alert
+      this.toast.show('Notificações ativadas com sucesso!', 'success');
       
     } catch (error) {
       console.error('Erro ao salvar no banco:', error);
