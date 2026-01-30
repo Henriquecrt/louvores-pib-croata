@@ -61,11 +61,10 @@ export class SongService {
     await deleteDoc(doc(db, 'songs', id));
   }
 
-  // --- CULTOS (VOLTANDO PARA 'services') ---
+  // --- CULTOS ---
   private listenToCultos() {
     console.log('🔄 Buscando na coleção "services"...');
     
-    // 👇 Mudado para 'services'
     const cultosCollection = collection(db, 'services'); 
     
     onSnapshot(cultosCollection, (snapshot) => {
@@ -81,7 +80,6 @@ export class SongService {
   }
 
   async addCulto(culto: Omit<Culto, 'id' | 'songIds'>) {
-    // 👇 Mudado para 'services'
     await addDoc(collection(db, 'services'), { 
       ...culto, 
       songIds: [], 
@@ -100,7 +98,6 @@ export class SongService {
 
   // --- RELAÇÕES ---
   async addSongToCulto(cultoId: string, songId: string) {
-    // 👇 Mudado para 'services'
     await updateDoc(doc(db, 'services', cultoId), { songIds: arrayUnion(songId) });
     await updateDoc(doc(db, 'songs', songId), { views: increment(1) });
   }
@@ -117,5 +114,25 @@ export class SongService {
 
   async removeVocalFromCulto(cultoId: string, name: string) {
     await updateDoc(doc(db, 'services', cultoId), { vocals: arrayRemove(name) });
+  }
+
+  // --- NOVA FUNÇÃO: BACKUP DE SEGURANÇA 🔒 ---
+  downloadBackup() {
+    const data = {
+      timestamp: new Date().toISOString(),
+      total_songs: this.songs().length,
+      total_services: this.cultos().length,
+      songs: this.songs(),
+      cultos: this.cultos()
+    };
+
+    // Cria um arquivo invisível e clica nele para baixar
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup_louvores_pib_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    window.URL.revokeObjectURL(url);
   }
 }

@@ -13,6 +13,7 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
   imports: [CommonModule, FormsModule, RouterLink, AddSongModalComponent],
   template: `
     <div class="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background-light dark:bg-background-dark">
+      
       <header class="sticky top-0 z-40 flex w-full items-center justify-between border-b border-solid border-[#dbece0] dark:border-white/10 bg-white/90 dark:bg-background-dark/90 backdrop-blur-md px-6 py-4 lg:px-10 transition-colors">
         <div class="flex items-center gap-4 text-primary">
           <div class="flex items-center justify-center size-10 rounded-xl bg-[#e6f2e6] dark:bg-primary/20">
@@ -20,7 +21,15 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
           </div>
           <a routerLink="/" class="text-[#101810] dark:text-white text-xl font-bold leading-tight tracking-[-0.015em] cursor-pointer hover:text-primary transition-colors">LOUVORES PIB CROATÁ</a>
         </div>
+        
         <div class="flex gap-3">
+          @if (auth.currentUser()) {
+            <button (click)="songService.downloadBackup()" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white font-bold text-sm hover:bg-gray-200 dark:hover:bg-white/20 transition-colors border border-gray-200 dark:border-white/5" title="Baixar todos os dados">
+              <span class="material-symbols-outlined text-[20px]">save</span>
+              <span class="hidden sm:inline">Backup</span>
+            </button>
+          }
+
           <a routerLink="/services" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 text-primary font-bold text-sm hover:bg-primary/20 transition-colors">
             <span class="material-symbols-outlined text-[20px]">calendar_month</span>
             <span class="hidden sm:inline">Cultos</span>
