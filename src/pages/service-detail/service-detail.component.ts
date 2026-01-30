@@ -26,7 +26,11 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
                 <p class="text-primary font-medium">{{ formatDate(c.date) }} • {{ songsInCulto().length }} músicas</p>
               </div>
 
-              <div class="flex gap-2">
+              <div class="flex flex-wrap gap-2">
+                <button (click)="openPlaylist()" class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg shadow-red-900/20 transition-all duration-200 text-sm active:scale-95" title="Ouvir todas as músicas em sequência">
+                  <span class="material-symbols-outlined text-[20px]">play_circle</span> Ouvir Playlist
+                </button>
+
                 <button (click)="printPage()" class="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-bold rounded-xl shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200 text-sm">
                   <span class="material-symbols-outlined text-[20px]">print</span> Imprimir
                 </button>
@@ -79,6 +83,7 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
                       <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                         <span>{{ song.artist }}</span>
                         @if(song.key) { <span class="px-1.5 py-0.5 border border-gray-200 dark:border-gray-600 rounded text-[10px]">{{ song.key }}</span> }
+                        @if(song.youtubeUrl) { <span class="text-red-500 flex items-center" title="Tem link do YouTube"><span class="material-symbols-outlined text-[14px]">play_circle</span></span> }
                       </div>
                     </div>
                   </div>
@@ -288,6 +293,33 @@ export class ServiceDetailComponent {
     newIds[index] = newIds[newIndex];
     newIds[newIndex] = temp;
     await this.songService.updateCulto(c.id, { songIds: newIds });
+  }
+
+  // --- FUNÇÃO NOVA: PLAYLIST AUTOMÁTICA ▶️ ---
+  openPlaylist() {
+    const songs = this.songsInCulto();
+    const videoIds: string[] = [];
+
+    // Expressão regular para extrair ID do YouTube
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+
+    songs.forEach(song => {
+      if (song.youtubeUrl) {
+        const match = song.youtubeUrl.match(regExp);
+        if (match && match[2].length === 11) {
+          videoIds.push(match[2]);
+        }
+      }
+    });
+
+    if (videoIds.length === 0) {
+      alert('Nenhuma música com link do YouTube nesta escala.');
+      return;
+    }
+
+    // Cria a URL da Playlist Temporária
+    const playlistUrl = `https://www.youtube.com/watch_videos?video_ids=${videoIds.join(',')}`;
+    window.open(playlistUrl, '_blank');
   }
 
   toggleVocal(member: string) {
