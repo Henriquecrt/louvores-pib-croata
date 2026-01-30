@@ -13,9 +13,11 @@ import { ToastService } from '../services/toast.service';
          [class.opacity-100]="toastService.toast().visible"
          [class.translate-y-0]="toastService.toast().visible">
       
-      <div class="pointer-events-auto flex items-center gap-4 p-4 rounded-2xl shadow-2xl border border-white/20 backdrop-blur-md"
+      <div class="flex items-center gap-4 p-4 rounded-2xl shadow-2xl border border-white/20 backdrop-blur-md transition-all"
            [ngClass]="{
-             'bg-white text-gray-800': true
+             'bg-white text-gray-800': true,
+             'pointer-events-auto': toastService.toast().visible, 
+             'pointer-events-none': !toastService.toast().visible
            }">
         
         <div class="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full"
@@ -38,7 +40,7 @@ import { ToastService } from '../services/toast.service';
           <p class="text-sm text-gray-600 leading-tight">{{ toastService.toast().message }}</p>
         </div>
 
-        <button (click)="toastService.close()" class="text-gray-400 hover:text-gray-600 transition-colors">
+        <button (click)="toastService.close()" class="text-gray-400 hover:text-gray-600 transition-colors pointer-events-auto">
           <span class="material-symbols-outlined text-lg">close</span>
         </button>
       </div>
