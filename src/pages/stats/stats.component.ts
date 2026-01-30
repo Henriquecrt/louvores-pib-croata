@@ -122,10 +122,10 @@ import { SongService } from '../../services/song.service';
 export class StatsComponent {
   songService = inject(SongService);
   
-  // Controle do Filtro
+  // Controle do Filtro (Começa no Geral)
   period = signal<'geral' | '2026' | '3meses'>('geral');
 
-  // Cálculos Inteligentes
+  // Lógica Inteligente de Cálculo
   statsData = computed(() => {
     const p = this.period();
     const cultos = this.songService.cultos();
@@ -139,7 +139,7 @@ export class StatsComponent {
        filteredCultos = cultos.filter(c => c.date.startsWith('2026'));
     } else if (p === '3meses') {
        const cutoff = new Date();
-       cutoff.setDate(now.getDate() - 90);
+       cutoff.setDate(now.getDate() - 90); // Pega os últimos 90 dias
        filteredCultos = cultos.filter(c => new Date(c.date + 'T12:00') >= cutoff);
     }
 
@@ -159,6 +159,7 @@ export class StatsComponent {
        .slice(0, 10);
 
     // 4. Monta a Lista de "Zero Views" (Oportunidades)
+    // São músicas que existem no banco, mas não foram tocadas no período selecionado
     const zero = allSongs
        .filter(s => !counts.has(s.id))
        .sort((a, b) => a.title.localeCompare(b.title));
