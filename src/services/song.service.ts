@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { collection, addDoc, doc, deleteDoc, updateDoc, onSnapshot, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
+import { collection, addDoc, doc, deleteDoc, updateDoc, onSnapshot, arrayUnion, arrayRemove, increment, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase-config';
 
 export interface Song {
@@ -50,7 +50,18 @@ export class SongService {
   }
 
   async addSong(song: Omit<Song, 'id' | 'views'>) {
-    await addDoc(collection(db, 'songs'), { ...song, views: 0, createdAt: new Date() });
+    // Normaliza para comparar (Maiúsculo e sem acentos)
+    const normalize = (text: string) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toUpperCase();
+    const newTitleNorm = normalize(song.title);
+
+    // Verifica se já existe no array local (muito mais rápido que consultar o banco)
+    const exists = this.songs().some(s => normalize(s.title) === newTitleNorm);
+
+    if (!exists) {
+      await addDoc(collection(db, 'songs'), { ...song, views: 0, createdAt: new Date() });
+      return true; // Adicionou
+    }
+    return false; // Duplicada
   }
 
   async updateSong(id: string, data: Partial<Song>) {
@@ -63,19 +74,11 @@ export class SongService {
 
   // --- CULTOS ---
   private listenToCultos() {
-    console.log('🔄 Buscando na coleção "services"...');
-    
     const cultosCollection = collection(db, 'services'); 
-    
     onSnapshot(cultosCollection, (snapshot) => {
       const cultosData: Culto[] = [];
       snapshot.forEach((doc) => cultosData.push({ id: doc.id, ...doc.data() } as Culto));
-      
-      console.log(`✅ Conexão OK! Encontrei ${cultosData.length} cultos em 'services'.`);
-      
       this.cultos.set(cultosData.sort((a, b) => b.date.localeCompare(a.date)));
-    }, (error) => {
-      console.error('❌ Erro de permissão ou conexão:', error);
     });
   }
 
@@ -116,17 +119,15 @@ export class SongService {
     await updateDoc(doc(db, 'services', cultoId), { vocals: arrayRemove(name) });
   }
 
-  // --- NOVA FUNÇÃO: BACKUP DE SEGURANÇA 🔒 ---
+  // --- BACKUP & IMPORTAÇÃO 🔄 ---
   downloadBackup() {
     const data = {
       timestamp: new Date().toISOString(),
-      total_songs: this.songs().length,
-      total_services: this.cultos().length,
+      source: 'PIB_CROATA_SYSTEM',
       songs: this.songs(),
       cultos: this.cultos()
     };
 
-    // Cria um arquivo invisível e clica nele para baixar
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -134,5 +135,55 @@ export class SongService {
     a.download = `backup_louvores_pib_${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     window.URL.revokeObjectURL(url);
+  }
+
+  // Função para processar o arquivo JSON
+  async importData(file: File): Promise<{ added: number, skipped: number }> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = async (e: any) => {
+        try {
+          const json = JSON.parse(e.target.result);
+          let songsToImport: any[] = [];
+
+          // Identifica se é backup completo ou lista simples
+          if (json.songs && Array.isArray(json.songs)) {
+            songsToImport = json.songs;
+          } else if (Array.isArray(json)) {
+            songsToImport = json;
+          }
+
+          let added = 0;
+          let skipped = 0;
+
+          for (const song of songsToImport) {
+            // Removemos o ID antigo para o Firebase criar um novo limpo
+            const { id, views, ...songData } = song; 
+            
+            // Garantimos que os campos obrigatórios existam
+            if (!songData.title || !songData.lyrics) continue;
+
+            const success = await this.addSong({
+              title: songData.title,
+              artist: songData.artist || '',
+              lyrics: songData.lyrics,
+              key: songData.key || '',
+              tags: songData.tags || '',
+              youtubeUrl: songData.youtubeUrl || ''
+            });
+
+            if (success) added++;
+            else skipped++;
+          }
+
+          resolve({ added, skipped });
+        } catch (error) {
+          reject(error);
+        }
+      };
+      
+      reader.readAsText(file);
+    });
   }
 }

@@ -24,10 +24,16 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
         
         <div class="flex gap-3">
           @if (auth.currentUser()) {
-            <button (click)="songService.downloadBackup()" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white font-bold text-sm hover:bg-gray-200 dark:hover:bg-white/20 transition-colors border border-gray-200 dark:border-white/5" title="Baixar todos os dados">
+            <button (click)="songService.downloadBackup()" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white font-bold text-sm hover:bg-gray-200 dark:hover:bg-white/20 transition-colors border border-gray-200 dark:border-white/5" title="Baixar Backup">
               <span class="material-symbols-outlined text-[20px]">save</span>
               <span class="hidden sm:inline">Backup</span>
             </button>
+
+            <label class="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-bold text-sm hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors border border-blue-200 dark:border-blue-800/30 cursor-pointer" title="Importar Músicas (.JSON)">
+              <span class="material-symbols-outlined text-[20px]">upload_file</span>
+              <span class="hidden sm:inline">Importar</span>
+              <input type="file" accept=".json" class="hidden" (change)="onFileSelected($event)">
+            </label>
           }
 
           <a routerLink="/services" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 text-primary font-bold text-sm hover:bg-primary/20 transition-colors">
@@ -278,7 +284,7 @@ export class RepertoireComponent {
   editingSong = signal<Song | null>(null);
   selectedSong = signal<Song | null>(null);
 
-  // --- ESTADOS DOS NOVOS MODAIS E TOAST ---
+  // --- ESTADOS DOS MODAIS ---
   showConfirmModal = signal(false);
   confirmMessage = signal('');
   pendingDeleteAction: (() => void) | null = null;
@@ -287,8 +293,8 @@ export class RepertoireComponent {
   alertMessage = signal('');
 
   toastState = signal({ show: false, title: '', message: '', classes: '', icon: '', iconBg: '' });
-  // ----------------------------------------
 
+  // COMPUTED
   topSongs = computed(() => {
     return this.songService.songs()
       .filter(s => (s.views || 0) > 0)
@@ -316,7 +322,24 @@ export class RepertoireComponent {
     return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toUpperCase();
   }
 
-  // --- CONFIRMAÇÃO ---
+  // --- NOVA FUNÇÃO: IMPORTAR JSON ---
+  async onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+      const result = await this.songService.importData(file);
+      this.triggerToast('Importação Concluída', `${result.added} novas músicas adicionadas. (${result.skipped} ignoradas)`, 'success');
+    } catch (error) {
+      console.error(error);
+      this.triggerToast('Erro', 'Arquivo inválido ou erro ao processar.', 'error');
+    }
+    
+    // Limpa o input para permitir selecionar o mesmo arquivo novamente se quiser
+    event.target.value = '';
+  }
+
+  // --- AÇÕES CRUD ---
   askToDelete(song: Song) {
     this.confirmMessage.set(`Deseja realmente excluir "${song.title}"?`);
     this.pendingDeleteAction = () => {
@@ -346,7 +369,6 @@ export class RepertoireComponent {
     this.pendingDeleteAction = null;
   }
 
-  // --- ALERTA ---
   triggerAlert(message: string) {
     this.alertMessage.set(message);
     this.showAlertModal.set(true);
@@ -356,7 +378,6 @@ export class RepertoireComponent {
     this.showAlertModal.set(false);
   }
 
-  // --- TOAST ---
   triggerToast(title: string, message: string, type: 'success' | 'warning' | 'error') {
     let classes = '';
     let icon = '';
@@ -393,7 +414,6 @@ export class RepertoireComponent {
 
     const normalizedData = { ...songData, title: upperTitle, artist: upperArtist, key: upperKey };
 
-    // Verificação de Duplicidade (Usando o novo Modal de Alerta)
     if (!currentSong) {
       const inputLimpo = this.normalizeText(upperTitle);
       const exists = this.songService.songs().some(song => {
