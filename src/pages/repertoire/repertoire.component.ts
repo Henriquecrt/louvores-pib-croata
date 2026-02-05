@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { Song, SongService, Culto } from '../../services/song.service';
+import { Song, SongService } from '../../services/song.service';
 import { AuthService } from '../../services/auth.service';
 import { AddSongModalComponent } from '../../components/add-song-modal.component';
 
@@ -24,16 +24,10 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
         
         <div class="flex gap-3">
           @if (auth.currentUser()) {
-            <button (click)="songService.downloadBackup()" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white font-bold text-sm hover:bg-gray-200 dark:hover:bg-white/20 transition-colors border border-gray-200 dark:border-white/5" title="Baixar Backup">
+            <button (click)="songService.downloadBackup()" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white font-bold text-sm hover:bg-gray-200 dark:hover:bg-white/20 transition-colors border border-gray-200 dark:border-white/5" title="Baixar todos os dados">
               <span class="material-symbols-outlined text-[20px]">save</span>
               <span class="hidden sm:inline">Backup</span>
             </button>
-
-            <label class="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-bold text-sm hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors border border-blue-200 dark:border-blue-800/30 cursor-pointer" title="Importar Músicas (.JSON)">
-              <span class="material-symbols-outlined text-[20px]">upload_file</span>
-              <span class="hidden sm:inline">Importar</span>
-              <input type="file" accept=".json" class="hidden" (change)="onFileSelected($event)">
-            </label>
           }
 
           <a routerLink="/services" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 text-primary font-bold text-sm hover:bg-primary/20 transition-colors">
@@ -179,6 +173,12 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
                     @if(song.key) { 
                       <span class="font-bold text-gray-700 dark:text-gray-300 text-sm border border-gray-300 dark:border-gray-600 px-2 rounded">Tom: {{ song.key }}</span> 
                     }
+                    @if(getLastPlayed(song.id); as lastDate) {
+                        <span class="flex items-center gap-1 text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5 rounded-full border border-orange-100 dark:border-orange-900/30" title="Data do último culto em que esta música foi usada">
+                          <span class="material-symbols-outlined text-[14px]">history</span>
+                          Última vez: {{ lastDate }}
+                        </span>
+                    }
                   </div>
                 </div>
                 <button (click)="closeViewModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-2 rounded-full hover:bg-gray-200 dark:hover:bg-white/10"><span class="material-symbols-outlined text-2xl">close</span></button>
@@ -190,50 +190,12 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
                     <iframe [src]="getSafeEmbedUrl(song.youtubeUrl)" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full h-full"></iframe>
                   </div>
                 }
-                
-                <pre class="whitespace-pre-wrap font-sans text-lg md:text-xl text-gray-700 dark:text-gray-200 leading-relaxed text-center mb-8">{{ song.lyrics }}</pre>
-                
+                <pre class="whitespace-pre-wrap font-sans text-lg md:text-xl text-gray-700 dark:text-gray-200 leading-relaxed text-center">{{ song.lyrics }}</pre>
                 @if (song.tags) {
-                  <div class="mb-8 flex flex-wrap gap-2 justify-center">
+                  <div class="mt-8 flex flex-wrap gap-2 justify-center">
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600">#{{ song.tags }}</span>
                   </div>
                 }
-
-                <div class="pt-6 border-t border-gray-100 dark:border-white/10">
-                  <h3 class="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <span class="material-symbols-outlined text-lg">history</span> Histórico de Uso
-                  </h3>
-                  
-                  <div class="space-y-2">
-                    @for (culto of getSongHistory(song.id); track culto.id) {
-                      <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 gap-2">
-                        <div class="flex items-center gap-3">
-                          <div class="bg-primary/10 text-primary p-2 rounded-lg">
-                            <span class="material-symbols-outlined text-lg">calendar_today</span>
-                          </div>
-                          <div>
-                            <div class="font-bold text-sm text-gray-900 dark:text-gray-200">{{ culto.title }}</div>
-                            <div class="text-xs text-gray-500">{{ formatDate(culto.date) }}</div>
-                          </div>
-                        </div>
-                        
-                        @if (culto.vocals && culto.vocals.length > 0) {
-                          <div class="flex items-center gap-1.5 bg-white dark:bg-black/20 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/5">
-                            <span class="material-symbols-outlined text-gray-400 text-sm">mic</span>
-                            <span class="text-xs font-medium text-gray-600 dark:text-gray-300">
-                              {{ culto.vocals.join(', ') }}
-                            </span>
-                          </div>
-                        }
-                      </div>
-                    } @empty {
-                      <div class="text-center py-6 text-gray-400 text-sm italic bg-gray-50 dark:bg-white/5 rounded-xl border border-dashed border-gray-200 dark:border-white/10">
-                        Esta música ainda não foi adicionada a nenhum culto registrado.
-                      </div>
-                    }
-                  </div>
-                </div>
-
               </div>
 
               <div class="px-6 py-4 border-t border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-white/5 flex justify-center">
@@ -316,7 +278,7 @@ export class RepertoireComponent {
   editingSong = signal<Song | null>(null);
   selectedSong = signal<Song | null>(null);
 
-  // --- ESTADOS DOS NOVOS MODAIS E TOAST ---
+  // --- ESTADOS DOS MODAIS ---
   showConfirmModal = signal(false);
   confirmMessage = signal('');
   pendingDeleteAction: (() => void) | null = null;
@@ -325,8 +287,8 @@ export class RepertoireComponent {
   alertMessage = signal('');
 
   toastState = signal({ show: false, title: '', message: '', classes: '', icon: '', iconBg: '' });
-  // ----------------------------------------
 
+  // COMPUTED
   topSongs = computed(() => {
     return this.songService.songs()
       .filter(s => (s.views || 0) > 0)
@@ -341,31 +303,17 @@ export class RepertoireComponent {
     return songs.filter(song => song.title.toLowerCase().includes(query) || song.lyrics.toLowerCase().includes(query) || (song.artist && song.artist.toLowerCase().includes(query)));
   });
 
-  // 👇 NOVA FUNÇÃO: Busca o histórico completo de uso
-  getSongHistory(songId: string): Culto[] {
-    return this.songService.cultos()
-      .filter(c => c.songIds.includes(songId))
-      .sort((a, b) => b.date.localeCompare(a.date)); // Do mais recente para o antigo
-  }
-
-  // A função antiga 'getLastPlayed' pode ser removida se quiser, 
-  // mas deixei aqui caso use em outro lugar.
   getLastPlayed(songId: string): string | null {
     const cultos = this.songService.cultos();
     const playedIn = cultos.filter(c => c.songIds.includes(songId));
     if (playedIn.length === 0) return null;
-    const lastCulto = playedIn[playedIn.length - 1]; // Pega o último (supondo ordenação)
+    const lastCulto = playedIn[0];
     const [y, m, d] = lastCulto.date.split('-');
     return `${d}/${m}/${y}`;
   }
 
   normalizeText(text: string): string {
     return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toUpperCase();
-  }
-
-  formatDate(dateStr: string) { 
-    const [y, m, d] = dateStr.split('-'); 
-    return `${d}/${m}/${y}`; 
   }
 
   // --- NOVA FUNÇÃO: IMPORTAR JSON ---
@@ -381,6 +329,7 @@ export class RepertoireComponent {
       this.triggerToast('Erro', 'Arquivo inválido ou erro ao processar.', 'error');
     }
     
+    // Limpa o input para permitir selecionar o mesmo arquivo novamente se quiser
     event.target.value = '';
   }
 
