@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { collection, addDoc, doc, deleteDoc, updateDoc, onSnapshot, arrayUnion, arrayRemove, increment, getDocs, query, where } from 'firebase/firestore';
+import { collection, addDoc, doc, deleteDoc, updateDoc, onSnapshot, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
 import { db } from '../firebase-config';
 
 export interface Song {
@@ -39,13 +39,35 @@ export class SongService {
     this.listenToCultos();
   }
 
-  // --- MÚSICAS ---
+  // --- MÚSICAS (BLINDADO 🛡️) ---
   private listenToSongs() {
     const songsCollection = collection(db, 'songs');
-    onSnapshot(songsCollection, (snapshot) => {
+    
+    // Adicionei { includeMetadataChanges: true } para forçar atualização
+    // mesmo quando os dados vêm do cache local do celular.
+    onSnapshot(songsCollection, { includeMetadataChanges: true }, (snapshot) => {
       const songsData: Song[] = [];
       snapshot.forEach((doc) => songsData.push({ id: doc.id, ...doc.data() } as Song));
+      
+      // Atualiza a lista
       this.songs.set(songsData.sort((a, b) => a.title.localeCompare(b.title)));
+    }, (error) => {
+      console.error("Erro ao carregar músicas:", error);
+      // Se der erro, tenta conectar de novo silenciosamente (o onSnapshot já tenta reconectar sozinho)
+    });
+  }
+
+  // --- CULTOS (BLINDADO 🛡️) ---
+  private listenToCultos() {
+    const cultosCollection = collection(db, 'services'); 
+    
+    onSnapshot(cultosCollection, { includeMetadataChanges: true }, (snapshot) => {
+      const cultosData: Culto[] = [];
+      snapshot.forEach((doc) => cultosData.push({ id: doc.id, ...doc.data() } as Culto));
+      
+      this.cultos.set(cultosData.sort((a, b) => b.date.localeCompare(a.date)));
+    }, (error) => {
+      console.error("Erro ao carregar cultos:", error);
     });
   }
 
@@ -70,16 +92,6 @@ export class SongService {
 
   async deleteSong(id: string) {
     await deleteDoc(doc(db, 'songs', id));
-  }
-
-  // --- CULTOS ---
-  private listenToCultos() {
-    const cultosCollection = collection(db, 'services'); 
-    onSnapshot(cultosCollection, (snapshot) => {
-      const cultosData: Culto[] = [];
-      snapshot.forEach((doc) => cultosData.push({ id: doc.id, ...doc.data() } as Culto));
-      this.cultos.set(cultosData.sort((a, b) => b.date.localeCompare(a.date)));
-    });
   }
 
   async addCulto(culto: Omit<Culto, 'id' | 'songIds'>) {
