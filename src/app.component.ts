@@ -1,7 +1,9 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { ToastComponent } from './components/toast.component'; // O visual do aviso
-import { NotificationService } from './services/notification.service'; // Para garantir que os avisos cheguem
+import { SwUpdate, VersionReadyEvent } from '@angular/service-worker'; // <--- Importante para atualização
+import { filter } from 'rxjs';
+import { ToastComponent } from './components/toast.component'; 
+import { NotificationService } from './services/notification.service'; 
 
 @Component({
   selector: 'app-root',
@@ -14,8 +16,21 @@ import { NotificationService } from './services/notification.service'; // Para g
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AppComponent {
-  // Injetamos o serviço aqui para garantir que o app comece a "escutar" 
-  // notificações assim que for aberto, independente da página.
+export class AppComponent implements OnInit {
   notificationService = inject(NotificationService);
+  updates = inject(SwUpdate); // <--- Injeção do serviço de atualização
+
+  ngOnInit() {
+    // Verifica se o Service Worker (PWA) está ativo no navegador
+    if (this.updates.isEnabled) {
+      
+      // Fica vigiando se chegou uma nova versão do site
+      this.updates.versionUpdates
+        .pipe(filter((evt): evt is VersionReadyEvent => evt.type === 'VERSION_READY'))
+        .subscribe(() => {
+          // Assim que baixar a nova versão, ativa e recarrega a página sozinho
+          this.updates.activateUpdate().then(() => document.location.reload());
+        });
+    }
+  }
 }
