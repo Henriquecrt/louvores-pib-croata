@@ -3,6 +3,7 @@ import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
+import { SongService, Song } from '../../services/song.service';
 
 @Component({
   selector: 'app-home',
@@ -42,6 +43,12 @@ import { NotificationService } from '../../services/notification.service';
           </div>
           
           <div class="hidden md:flex items-center gap-4">
+            @if (auth.currentUser()) {
+              <button (click)="songService.downloadBackup()" class="inline-flex items-center gap-2 justify-center rounded-lg bg-gray-100 px-3 py-2 text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-200 transition-all duration-200 cursor-pointer border border-gray-200" title="Baixar Backup dos Dados">
+                 <span class="material-symbols-outlined text-lg">save</span>
+              </button>
+            }
+
             <button (click)="enableNotifications()" class="inline-flex items-center gap-2 justify-center rounded-lg bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 shadow-sm hover:bg-blue-100 transition-all duration-200 cursor-pointer border border-blue-200" title="Receber novidades">
                <span class="material-symbols-outlined text-lg">notifications_active</span>
                Avisos
@@ -72,6 +79,12 @@ import { NotificationService } from '../../services/notification.service';
               <button (click)="enableNotifications(); toggleMobileMenu()" class="w-full p-3 mb-2 rounded-xl bg-blue-50 text-blue-700 font-bold text-center border border-blue-200 flex items-center justify-center gap-2 shadow-sm">
                   <span class="material-symbols-outlined">notifications_active</span> Ativar Notificações
               </button>
+              
+              @if (auth.currentUser()) {
+                <button (click)="songService.downloadBackup(); toggleMobileMenu()" class="w-full p-3 mb-2 rounded-xl bg-gray-100 text-gray-700 font-bold text-center border border-gray-200 flex items-center justify-center gap-2 shadow-sm">
+                  <span class="material-symbols-outlined">save</span> Fazer Backup dos Dados
+                </button>
+              }
 
               <a routerLink="/" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-primary font-bold transition-colors">Início</a>
               <a routerLink="/services" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-gray-600 hover:text-primary transition-colors">Cultos</a>
@@ -115,6 +128,47 @@ import { NotificationService } from '../../services/notification.service';
             <p class="max-w-2xl text-lg leading-relaxed text-gray-600 md:text-xl">
               Bem-vindo à Primeira Igreja Batista em Croatá. Acompanhe nossas escalas, aprenda os louvores e participe dos nossos cultos.
             </p>
+
+            @if (auth.currentUser()) {
+              <div class="w-full max-w-sm mx-auto my-2 animate-[fadeIn_0.5s_ease-out]">
+                @if (!suggestionState().song) {
+                  <button (click)="generateSuggestion()" class="w-full group relative flex flex-col items-center justify-center gap-1 overflow-hidden rounded-xl bg-gradient-to-br from-green-600 to-emerald-600 p-4 text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl active:scale-95">
+                    <div class="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-white/10 blur-xl"></div>
+                    <div class="absolute -left-4 -bottom-4 h-16 w-16 rounded-full bg-white/10 blur-xl"></div>
+                    
+                    <span class="material-symbols-outlined text-3xl mb-1 animate-bounce">casino</span>
+                    <h3 class="font-black text-lg">Me Ajuda, Deus! 🎲</h3>
+                    <p class="text-white/80 text-xs font-medium">Sortear louvor esquecido</p>
+                  </button>
+                } @else {
+                  <div class="relative w-full rounded-xl bg-white p-5 shadow-xl border border-green-100 ring-4 ring-green-50 text-left animate-[scaleIn_0.3s_ease-out]">
+                    <div class="absolute top-4 right-4 text-green-200">
+                      <span class="material-symbols-outlined text-3xl">lightbulb</span>
+                    </div>
+                    
+                    <p class="text-[10px] font-bold text-green-600 uppercase tracking-widest mb-1">Sugestão de Resgate</p>
+                    <h3 class="text-xl font-black text-gray-900 mb-0.5 leading-tight truncate">{{ suggestionState().song?.title }}</h3>
+                    <p class="text-xs font-bold text-gray-500 mb-3 truncate">{{ suggestionState().song?.artist }}</p>
+                    
+                    <div class="bg-green-50 rounded-lg p-2.5 mb-3 border border-green-100">
+                      <p class="text-green-800 text-xs font-medium flex items-center gap-2">
+                        <span class="material-symbols-outlined text-base">history</span>
+                        {{ suggestionState().reason }}
+                      </p>
+                    </div>
+
+                    <div class="flex gap-2">
+                      <button (click)="generateSuggestion()" class="flex-1 py-2 rounded-lg bg-gray-100 text-gray-600 font-bold text-xs hover:bg-gray-200 transition-colors flex items-center justify-center gap-1">
+                        <span class="material-symbols-outlined text-base">refresh</span> Outra
+                      </button>
+                      <a routerLink="/repertoire" class="flex-1 py-2 rounded-lg bg-green-600 text-white font-bold text-xs hover:bg-green-700 transition-colors shadow-lg shadow-green-200 flex items-center justify-center gap-1">
+                        Ver Letra <span class="material-symbols-outlined text-base">arrow_forward</span>
+                      </a>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
 
             <div class="flex flex-col sm:flex-row gap-4 w-full justify-center pt-4 flex-wrap">
               <button routerLink="/services" class="group relative flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-primary px-8 py-4 text-base font-bold text-white shadow-lg transition-all duration-300 hover:bg-primary-hover hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
@@ -235,11 +289,14 @@ export class HomeComponent implements OnInit {
   auth = inject(AuthService);
   router = inject(Router);
   notificationService = inject(NotificationService);
+  songService = inject(SongService); 
   
   isMobileMenuOpen = signal(false);
   deferredPrompt: any = null;
 
-  // DETECTAR SE É IPHONE (iOS) E SE ESTÁ INSTALADO
+  // Estado da Sugestão (Me Ajuda, Deus!)
+  suggestionState = signal<{song: Song | null, reason: string}>({ song: null, reason: '' });
+
   isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
   isStandalone = window.matchMedia('(display-mode: standalone)').matches;
 
@@ -264,15 +321,11 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  // --- FUNÇÃO ATUALIZADA COM A REGRA DO IPHONE ---
   enableNotifications() {
-    // 1. Verifica se é iPhone e NÃO está instalado
     if (this.isIOS && !this.isStandalone) {
       alert('⚠️ No iPhone, você precisa instalar o App primeiro!\n\n1. Toque no botão "Compartilhar" (quadrado com seta) do navegador.\n2. Escolha "Adicionar à Tela de Início".\n3. Abra o app novo que apareceu e tente de novo.');
       return; // Para tudo por aqui
     }
-
-    // 2. Se for Android, PC ou iPhone já instalado, segue a vida
     this.notificationService.requestPermission();
   }
 
@@ -286,5 +339,55 @@ export class HomeComponent implements OnInit {
 
   toggleMobileMenu() {
     this.isMobileMenuOpen.update(val => !val);
+  }
+
+  // --- LÓGICA DO SORTEIO (ME AJUDA, DEUS!) 🎲 ---
+  generateSuggestion() {
+    const allSongs = this.songService.songs();
+    const allCultos = this.songService.cultos();
+    const today = new Date();
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(today.getDate() - 90); // 90 dias atrás
+
+    // 1. Mapear última data de cada música
+    const lastDates = new Map<string, Date>();
+    
+    // Como cultos estão ordenados por data (desc), a primeira vez que vemos a música é a última vez que tocou
+    for (const culto of allCultos) {
+      const cultoDate = new Date(culto.date + 'T12:00:00'); // Compensar fuso
+      for (const songId of culto.songIds) {
+        if (!lastDates.has(songId)) {
+          lastDates.set(songId, cultoDate);
+        }
+      }
+    }
+
+    // 2. Filtrar "Esquecidas"
+    const candidates = allSongs.filter(song => {
+      const lastDate = lastDates.get(song.id);
+      // Se nunca tocou OU tocou antes de 90 dias atrás
+      return !lastDate || lastDate < ninetyDaysAgo;
+    });
+
+    if (candidates.length === 0) {
+      this.suggestionState.set({ song: null, reason: 'O repertório está super em dia! Parabéns!' });
+      alert('Parabéns! Nenhuma música está esquecida (todas foram tocadas nos últimos 3 meses).');
+      return;
+    }
+
+    // 3. Sorteio Aleatório
+    const winner = candidates[Math.floor(Math.random() * candidates.length)];
+    const lastDate = lastDates.get(winner.id);
+    
+    let reason = '';
+    if (!lastDate) reason = 'Nunca foi tocada nos cultos registrados.';
+    else {
+      // Diferença em dias
+      const diffTime = Math.abs(today.getTime() - lastDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+      reason = `Não é tocada há ${diffDays} dias (desde ${lastDate.toLocaleDateString('pt-BR')}).`;
+    }
+
+    this.suggestionState.set({ song: winner, reason });
   }
 }
