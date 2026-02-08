@@ -176,12 +176,12 @@ import { SongService, Song } from '../../services/song.service';
                 <span>Ver Agenda de Cultos</span>
               </button>
               
-              <button routerLink="/repertoire" class="flex items-center justify-center gap-2 rounded-xl bg-white px-8 py-4 text-base font-bold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-200 transition-all duration-200 hover:bg-gray-50 hover:text-primary">
+              <button routerLink="/repertoire" class="flex items-center justify-center gap-2 rounded-xl bg-white px-8 py-4 text-base font-bold text-gray-700 shadow-lg ring-1 ring-inset ring-gray-200 transition-all duration-300 hover:bg-gray-50 hover:text-primary hover:scale-105 hover:shadow-xl">
                 <span class="material-symbols-outlined">library_music</span>
                 Repertório
               </button>
 
-              <button routerLink="/stats" class="flex items-center justify-center gap-2 rounded-xl bg-orange-50 px-8 py-4 text-base font-bold text-orange-600 shadow-sm ring-1 ring-inset ring-orange-200 transition-all duration-200 hover:bg-orange-100 hover:text-orange-700">
+              <button routerLink="/stats" class="flex items-center justify-center gap-2 rounded-xl bg-orange-50 px-8 py-4 text-base font-bold text-orange-600 shadow-lg ring-1 ring-inset ring-orange-200 transition-all duration-300 hover:bg-orange-100 hover:text-orange-700 hover:scale-105 hover:shadow-xl">
                 <span class="material-symbols-outlined">equalizer</span>
                 Ranking
               </button>
@@ -228,37 +228,37 @@ import { SongService, Song } from '../../services/song.service';
           <div class="mx-auto max-w-7xl">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
               
-              <a routerLink="/services" class="group flex flex-col items-center gap-4 p-8 rounded-3xl bg-gray-50 hover:bg-white hover:shadow-xl transition-all duration-300 border border-transparent hover:border-gray-100 cursor-pointer">
-                <div class="h-16 w-16 rounded-2xl bg-green-100 flex items-center justify-center text-green-600 mb-2 group-hover:scale-110 transition-transform">
+              <a routerLink="/services" class="group flex flex-col items-center gap-4 p-8 rounded-3xl bg-white shadow-lg shadow-gray-200/50 border border-gray-100 hover:shadow-xl hover:shadow-green-100/50 hover:border-green-200 hover:-translate-y-2 transition-all duration-300 cursor-pointer relative overflow-hidden">
+                <div class="h-16 w-16 rounded-2xl bg-green-100 flex items-center justify-center text-green-600 mb-2 group-hover:scale-110 group-hover:bg-green-600 group-hover:text-white transition-all duration-300">
                   <span class="material-symbols-outlined text-3xl">calendar_month</span>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900">Agenda de Cultos</h3>
+                <h3 class="text-xl font-bold text-gray-900 group-hover:text-green-600 transition-colors">Agenda de Cultos</h3>
                 <p class="text-gray-500 leading-relaxed">
                   Confira os dias, horários e quem estará ministrando o louvor em cada culto da nossa igreja.
                 </p>
-                <span class="text-primary font-bold text-sm mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Ver Agenda →</span>
+                <span class="text-primary font-bold text-sm mt-2 opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">Ver Agenda →</span>
               </a>
 
-              <a routerLink="/repertoire" class="group flex flex-col items-center gap-4 p-8 rounded-3xl bg-gray-50 hover:bg-white hover:shadow-xl transition-all duration-300 border border-transparent hover:border-gray-100 cursor-pointer">
-                <div class="h-16 w-16 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 mb-2 group-hover:scale-110 transition-transform">
+              <a routerLink="/repertoire" class="group flex flex-col items-center gap-4 p-8 rounded-3xl bg-white shadow-lg shadow-gray-200/50 border border-gray-100 hover:shadow-xl hover:shadow-blue-100/50 hover:border-blue-200 hover:-translate-y-2 transition-all duration-300 cursor-pointer relative overflow-hidden">
+                <div class="h-16 w-16 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 mb-2 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
                   <span class="material-symbols-outlined text-3xl">lyrics</span>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900">Nosso Repertório</h3>
+                <h3 class="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">Nosso Repertório</h3>
                 <p class="text-gray-500 leading-relaxed">
                   Acesse as letras, ouça os hinos e aprenda as canções que cantamos em nossa comunidade.
                 </p>
-                <span class="text-primary font-bold text-sm mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Ver Músicas →</span>
+                <span class="text-blue-600 font-bold text-sm mt-2 opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">Ver Músicas →</span>
               </a>
 
-              <a routerLink="/stats" class="group flex flex-col items-center gap-4 p-8 rounded-3xl bg-gray-50 hover:bg-white hover:shadow-xl transition-all duration-300 border border-transparent hover:border-gray-100 cursor-pointer">
-                <div class="h-16 w-16 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-600 mb-2 group-hover:scale-110 transition-transform">
+              <a routerLink="/stats" class="group flex flex-col items-center gap-4 p-8 rounded-3xl bg-white shadow-lg shadow-gray-200/50 border border-gray-100 hover:shadow-xl hover:shadow-orange-100/50 hover:border-orange-200 hover:-translate-y-2 transition-all duration-300 cursor-pointer relative overflow-hidden">
+                <div class="h-16 w-16 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-600 mb-2 group-hover:scale-110 group-hover:bg-orange-600 group-hover:text-white transition-all duration-300">
                   <span class="material-symbols-outlined text-3xl">equalizer</span>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900">Mais Tocadas</h3>
+                <h3 class="text-xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors">Mais Tocadas</h3>
                 <p class="text-gray-500 leading-relaxed">
                   Veja quais louvores tem marcado nossa história recente através do nosso ranking de execuções.
                 </p>
-                <span class="text-primary font-bold text-sm mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Ver Ranking →</span>
+                <span class="text-orange-600 font-bold text-sm mt-2 opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">Ver Ranking →</span>
               </a>
 
             </div>
