@@ -206,6 +206,7 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
           <div class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" (click)="closeViewModal()"></div>
           <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
             <div class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-[#1a2e1a] text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl animate-[slideIn_0.3s_ease-out_forwards] flex flex-col max-h-[90vh]">
+              
               <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-white/5">
                 <div class="flex flex-col">
                   <h2 class="text-2xl font-bold text-gray-900 dark:text-white leading-tight">{{ song.title }}</h2>
@@ -223,6 +224,7 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
                 </div>
                 <button (click)="closeViewModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-2 rounded-full hover:bg-gray-200 dark:hover:bg-white/10"><span class="material-symbols-outlined text-2xl">close</span></button>
               </div>
+
               <div class="flex-1 overflow-y-auto p-6 md:p-8 bg-white dark:bg-[#1a2e1a]">
                 @if (song.youtubeUrl) {
                     <div class="mb-6 aspect-video w-full rounded-xl overflow-hidden shadow-lg bg-black">
@@ -231,8 +233,25 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
                 }
                 <pre class="whitespace-pre-wrap font-sans text-lg md:text-xl text-gray-700 dark:text-gray-200 leading-relaxed text-center">{{ song.lyrics }}</pre>
               </div>
-              <div class="px-6 py-4 border-t border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-white/5 flex justify-center">
-                <button (click)="closeViewModal()" class="w-full sm:w-auto px-8 py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-xl font-bold hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">Fechar Leitura</button>
+
+              <div class="px-6 py-4 border-t border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-white/5 grid grid-cols-3 gap-3 items-center">
+                
+                <button (click)="navigateSong(-1)" 
+                        [disabled]="isFirstSong(song.id)"
+                        class="flex items-center justify-center gap-1 w-full py-3 bg-white dark:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white rounded-xl font-bold hover:bg-gray-100 dark:hover:bg-white/20 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                  <span class="material-symbols-outlined">arrow_back</span> <span class="hidden sm:inline">Anterior</span>
+                </button>
+
+                <button (click)="closeViewModal()" class="w-full py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-xl font-bold hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-sm uppercase">
+                  Fechar
+                </button>
+
+                <button (click)="navigateSong(1)" 
+                        [disabled]="isLastSong(song.id)"
+                        class="flex items-center justify-center gap-1 w-full py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-colors disabled:opacity-30 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-lg shadow-primary/20">
+                  <span class="hidden sm:inline">Próxima</span> <span class="material-symbols-outlined">arrow_forward</span>
+                </button>
+                
               </div>
             </div>
           </div>
@@ -296,21 +315,14 @@ export class ServiceDetailComponent {
 
   culto = computed(() => this.songService.cultos().find(c => c.id === this.cultoId()));
 
-  // COMPUTED INTELIGENTE: Junta a música com o Tom Específico do dia
   songsInCulto = computed(() => { 
     const currentCulto = this.culto(); 
     if (!currentCulto) return []; 
-    
-    // Pega a lista nova de itens (se existir) ou usa a antiga para compatibilidade
     const items = currentCulto.items || currentCulto.songIds.map(id => ({ songId: id, key: '' }));
-
     return items.map(item => {
       const song = this.songService.songs().find(s => s.id === item.songId);
       if (!song) return null;
-      
-      // O tom a ser exibido é: O do dia (item.key) OU o original (song.key)
       const displayKey = item.key || song.key;
-      
       return { song, displayKey };
     }).filter((item): item is { song: Song, displayKey: string | undefined } => !!item);
   });
@@ -324,15 +336,44 @@ export class ServiceDetailComponent {
       .slice(0, 10); 
   });
 
-  // Helper para pegar o tom na modal de visualização
   getKeyForSong(songId: string): string | undefined {
     const item = this.songsInCulto().find(i => i.song.id === songId);
     return item?.displayKey;
   }
 
-  // ADICIONAR AGORA SALVA O TOM ORIGINAL COMO PADRÃO
+  // --- NOVA LÓGICA DE NAVEGAÇÃO 🎠 ---
+  
+  // Verifica se é a primeira música (para desativar botão voltar)
+  isFirstSong(songId: string): boolean {
+    const list = this.songsInCulto();
+    return list.length > 0 && list[0].song.id === songId;
+  }
+
+  // Verifica se é a última música (para desativar botão próxima)
+  isLastSong(songId: string): boolean {
+    const list = this.songsInCulto();
+    return list.length > 0 && list[list.length - 1].song.id === songId;
+  }
+
+  // Função que troca a música
+  navigateSong(direction: number) {
+    const list = this.songsInCulto();
+    const currentId = this.selectedSong()?.id;
+    if (!currentId) return;
+
+    const currentIndex = list.findIndex(item => item.song.id === currentId);
+    if (currentIndex === -1) return;
+
+    const newIndex = currentIndex + direction;
+
+    // Proteção para não sair da lista
+    if (newIndex >= 0 && newIndex < list.length) {
+      this.selectedSong.set(list[newIndex].song);
+    }
+  }
+  // -----------------------------------
+
   addSong(song: Song) { 
-    // Passamos o tom original da música como padrão para este culto
     this.songService.addSongToCulto(this.cultoId(), song.id, song.key || ''); 
     this.searchTerm.set(''); 
   }
@@ -344,12 +385,10 @@ export class ServiceDetailComponent {
     } 
   }
 
-  // NOVA FUNÇÃO: Trocar o tom
   async changeTone(songId: string, currentKey: string | undefined) {
     const newKey = prompt('Qual o tom para este culto?', currentKey || '');
     const c = this.culto();
     if (newKey !== null && c) {
-      // Converte para maiúsculo pra ficar padrão (ex: g -> G)
       await this.songService.updateCultoTone(c, songId, newKey.toUpperCase());
     }
   }
@@ -357,69 +396,38 @@ export class ServiceDetailComponent {
   async moveSong(index: number, direction: number) {
     const c = this.culto();
     if (!c || !c.songIds) return;
-    
-    // Precisamos reordenar TANTO a lista simples quanto a lista de itens
     const newIds = [...c.songIds];
-    const newItems = c.items ? [...c.items] : newIds.map(id => ({ songId: id, key: '' })); // Fallback
-
+    const newItems = c.items ? [...c.items] : newIds.map(id => ({ songId: id, key: '' })); 
     const newIndex = index + direction;
     if (newIndex < 0 || newIndex >= newIds.length) return;
-
-    // Troca na lista de IDs
     [newIds[index], newIds[newIndex]] = [newIds[newIndex], newIds[index]];
-    
-    // Troca na lista de Itens (que guarda os tons)
     [newItems[index], newItems[newIndex]] = [newItems[newIndex], newItems[index]];
-
-    await this.songService.updateCulto(c.id, { 
-      songIds: newIds,
-      items: newItems 
-    });
+    await this.songService.updateCulto(c.id, { songIds: newIds, items: newItems });
   }
 
   openPlaylist() {
     const songs = this.songsInCulto();
     const videoIds: string[] = [];
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-
     songs.forEach(item => {
       if (item.song.youtubeUrl) {
         const match = item.song.youtubeUrl.match(regExp);
-        if (match && match[2].length === 11) {
-          videoIds.push(match[2]);
-        }
+        if (match && match[2].length === 11) { videoIds.push(match[2]); }
       }
     });
-
-    if (videoIds.length === 0) {
-      alert('Nenhuma música com link do YouTube nesta escala.');
-      return;
-    }
+    if (videoIds.length === 0) { alert('Nenhuma música com link do YouTube nesta escala.'); return; }
     const playlistUrl = `https://www.youtube.com/watch_videos?video_ids=${videoIds.join(',')}`;
     window.open(playlistUrl, '_blank');
   }
 
   toggleVocal(member: string) {
     const currentVocals = this.culto()?.vocals || [];
-    if (currentVocals.includes(member)) {
-        this.songService.removeVocalFromCulto(this.cultoId(), member);
-    } else {
-        this.songService.addVocalToCulto(this.cultoId(), member);
-    }
+    if (currentVocals.includes(member)) { this.songService.removeVocalFromCulto(this.cultoId(), member); } 
+    else { this.songService.addVocalToCulto(this.cultoId(), member); }
   }
 
-  addVocal() { 
-    if (this.vocalName()) { 
-      this.songService.addVocalToCulto(this.cultoId(), this.vocalName()); 
-      this.vocalName.set(''); 
-    } 
-  }
-
-  removeVocal(name: string) {
-    if(confirm(`Remover ${name} da escala?`)) {
-      this.songService.removeVocalFromCulto(this.cultoId(), name);
-    }
-  }
+  addVocal() { if (this.vocalName()) { this.songService.addVocalToCulto(this.cultoId(), this.vocalName()); this.vocalName.set(''); } }
+  removeVocal(name: string) { if(confirm(`Remover ${name} da escala?`)) { this.songService.removeVocalFromCulto(this.cultoId(), name); } }
 
   viewSong(song: Song) { this.selectedSong.set(song); }
   closeViewModal() { this.selectedSong.set(null); }
@@ -431,22 +439,17 @@ export class ServiceDetailComponent {
 
   shareOnWhatsApp() {
     const currentCulto = this.culto();
-    const songs = this.songsInCulto(); // Agora é uma lista de objetos { song, displayKey }
+    const songs = this.songsInCulto(); 
     if (!currentCulto) return;
-    
     let text = `*CULTO - ${this.formatDate(currentCulto.date)}*\n`;
     if (currentCulto.vocals && currentCulto.vocals.length > 0) { text += `\n*🎤 EQUIPE DE VOCAL:*\n${currentCulto.vocals.join(', ')}\n`; }
-    
     text += `\n*LISTA DE LOUVORES:*\n\n`;
-    
     songs.forEach((item, index) => {
-      // Usa o tom específico (displayKey)
       const key = item.displayKey ? `(${item.displayKey})` : '';
       text += `*${index + 1}. ${item.song.title}* ${key}\n`;
       if (item.song.youtubeUrl) { text += `>> ${item.song.youtubeUrl}\n`; }
       text += `\n`;
     });
-    
     text += `______________________________\n*Acompanhe a cifra e a letra aqui:*\n${window.location.href}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   }
