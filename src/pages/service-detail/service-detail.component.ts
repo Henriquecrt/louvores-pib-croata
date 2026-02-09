@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { SongService, Song } from '../../services/song.service';
+import { SongService, Song, Culto } from '../../services/song.service';
 import { AuthService } from '../../services/auth.service';
 import { AddSongModalComponent } from '../../components/add-song-modal.component';
 
@@ -11,6 +11,16 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
   selector: 'app-service-detail',
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule, AddSongModalComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styles: [`
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+    @media print {
+      .no-print { display: none !important; }
+      body { background-color: white !important; color: black !important; }
+      .break-inside-avoid { break-inside: avoid; page-break-inside: avoid; }
+    }
+  `],
   template: `
     <div class="min-h-screen bg-background-light dark:bg-background-dark pb-20 font-display no-print">
       
@@ -74,16 +84,28 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
             </h2>
             
             <div class="space-y-2">
-              @for (song of songsInCulto(); track song.id; let i = $index) {
-                <div (click)="viewSong(song)" class="bg-white dark:bg-[#253825] p-4 rounded-xl shadow-sm border-l-4 border-primary flex justify-between items-center group cursor-pointer hover:shadow-md transition-all">
+              @for (item of songsInCulto(); track item.song.id; let i = $index) {
+                <div (click)="viewSong(item.song)" class="bg-white dark:bg-[#253825] p-4 rounded-xl shadow-sm border-l-4 border-primary flex justify-between items-center group cursor-pointer hover:shadow-md transition-all">
                   <div class="flex items-center gap-3">
                     <span class="text-xl font-bold text-primary/40">#{{ i + 1 }}</span>
                     <div>
-                      <div class="font-bold text-gray-900 dark:text-white">{{ song.title }}</div>
+                      <div class="font-bold text-gray-900 dark:text-white">{{ item.song.title }}</div>
                       <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                        <span>{{ song.artist }}</span>
-                        @if(song.key) { <span class="px-1.5 py-0.5 border border-gray-200 dark:border-gray-600 rounded text-[10px]">{{ song.key }}</span> }
-                        @if(song.youtubeUrl) { <span class="text-red-500 flex items-center" title="Tem link do YouTube"><span class="material-symbols-outlined text-[14px]">play_circle</span></span> }
+                        <span>{{ item.song.artist }}</span>
+                        
+                        @if (auth.currentUser()) {
+                          <button (click)="$event.stopPropagation(); changeTone(item.song.id, item.displayKey)" 
+                                  class="px-2 py-0.5 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 border border-gray-300 dark:border-gray-500 rounded text-[11px] font-bold text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-1"
+                                  title="Mudar tom para este culto">
+                            Tom: {{ item.displayKey || '?' }} <span class="material-symbols-outlined text-[10px]">edit</span>
+                          </button>
+                        } @else {
+                          @if(item.displayKey) { 
+                            <span class="px-1.5 py-0.5 border border-gray-200 dark:border-gray-600 rounded text-[10px] font-bold">Tom: {{ item.displayKey }}</span> 
+                          }
+                        }
+
+                        @if(item.song.youtubeUrl) { <span class="text-red-500 flex items-center" title="Tem link do YouTube"><span class="material-symbols-outlined text-[14px]">play_circle</span></span> }
                       </div>
                     </div>
                   </div>
@@ -104,10 +126,10 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
                           </button>
                         </div>
 
-                        <button (click)="$event.stopPropagation(); openEditModal(song)" class="text-gray-300 hover:text-blue-500 p-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="Editar Música">
+                        <button (click)="$event.stopPropagation(); openEditModal(item.song)" class="text-gray-300 hover:text-blue-500 p-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="Editar Música">
                             <span class="material-symbols-outlined text-[20px]">edit</span>
                         </button>
-                        <button (click)="$event.stopPropagation(); removeSong(song.id)" class="text-gray-300 hover:text-red-500 p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Remover do culto">
+                        <button (click)="$event.stopPropagation(); removeSong(item.song.id)" class="text-gray-300 hover:text-red-500 p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Remover do culto">
                             <span class="material-symbols-outlined text-[20px]">remove_circle</span>
                         </button>
                     </div>
@@ -134,7 +156,7 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
               </div>
               <div class="space-y-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
                 @for (song of searchResults(); track song.id) {
-                  <button (click)="addSong(song.id)" class="w-full text-left p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 flex justify-between items-center group transition-colors">
+                  <button (click)="addSong(song)" class="w-full text-left p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 flex justify-between items-center group transition-colors">
                     <div>
                       <div class="font-bold text-gray-800 dark:text-gray-200 text-sm">{{ song.title }}</div>
                       <div class="text-xs text-gray-400">{{ song.artist }}</div>
@@ -190,7 +212,12 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
                   <div class="flex flex-wrap items-center gap-3 mt-1">
                     <div class="flex items-center gap-2">
                         <span class="text-primary font-medium flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">mic</span> {{ song.artist }}</span>
-                        @if(song.key) { <span class="text-gray-400 text-sm">•</span> <span class="font-bold text-gray-700 dark:text-gray-300 text-sm border border-gray-300 dark:border-gray-600 px-2 rounded">Tom: {{ song.key }}</span> }
+                        @if(getKeyForSong(song.id)) { 
+                           <span class="text-gray-400 text-sm">•</span> 
+                           <span class="font-bold text-gray-700 dark:text-gray-300 text-sm border border-gray-300 dark:border-gray-600 px-2 rounded">
+                             Tom: {{ getKeyForSong(song.id) }}
+                           </span> 
+                        }
                     </div>
                   </div>
                 </div>
@@ -232,16 +259,16 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
           }
         </div>
         <div class="space-y-10">
-          @for (song of songsInCulto(); track song.id; let i = $index) {
+          @for (item of songsInCulto(); track item.song.id; let i = $index) {
             <div class="break-inside-avoid">
               <div class="flex items-center justify-between border-b border-gray-300 pb-2 mb-4">
-                <h2 class="text-2xl font-bold">#{{ i + 1 }}. {{ song.title }}</h2>
+                <h2 class="text-2xl font-bold">#{{ i + 1 }}. {{ item.song.title }}</h2>
                 <div class="text-right">
-                  <span class="block text-sm text-gray-600">{{ song.artist }}</span>
-                  @if(song.key) { <span class="font-bold border border-black px-2 rounded">Tom: {{ song.key }}</span> }
+                  <span class="block text-sm text-gray-600">{{ item.song.artist }}</span>
+                  @if(item.displayKey) { <span class="font-bold border border-black px-2 rounded">Tom: {{ item.displayKey }}</span> }
                 </div>
               </div>
-              <pre class="whitespace-pre-wrap font-sans text-lg leading-relaxed text-center font-medium">{{ song.lyrics }}</pre>
+              <pre class="whitespace-pre-wrap font-sans text-lg leading-relaxed text-center font-medium">{{ item.song.lyrics }}</pre>
             </div>
           }
         </div>
@@ -249,16 +276,6 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
       }
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  styles: [`
-    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
-    @media print {
-      .no-print { display: none !important; }
-      body { background-color: white !important; color: black !important; }
-      .break-inside-avoid { break-inside: avoid; page-break-inside: avoid; }
-    }
-  `]
 })
 export class ServiceDetailComponent {
   private route = inject(ActivatedRoute);
@@ -273,39 +290,101 @@ export class ServiceDetailComponent {
   isModalOpen = signal(false);
   editingSong = signal<Song | null>(null);
 
-  constructor() { this.route.params.subscribe(params => this.cultoId.set(params['id'])); }
+  constructor() { 
+    this.route.params.subscribe(params => this.cultoId.set(params['id'])); 
+  }
 
   culto = computed(() => this.songService.cultos().find(c => c.id === this.cultoId()));
-  songsInCulto = computed(() => { const currentCulto = this.culto(); if (!currentCulto) return []; return currentCulto.songIds.map(id => this.songService.songs().find(s => s.id === id)).filter((s): s is Song => !!s); });
-  searchResults = computed(() => { const term = this.searchTerm().toLowerCase(); const currentIds = this.culto()?.songIds || []; return this.songService.songs().filter(s => !currentIds.includes(s.id)).filter(s => s.title.toLowerCase().includes(term) || s.artist.toLowerCase().includes(term)).slice(0, 10); });
 
-  addSong(songId: string) { this.songService.addSongToCulto(this.cultoId(), songId); this.searchTerm.set(''); }
-  removeSong(songId: string) { if(confirm('Remover esta música do culto?')) { this.songService.removeSongFromCulto(this.cultoId(), songId); } }
+  // COMPUTED INTELIGENTE: Junta a música com o Tom Específico do dia
+  songsInCulto = computed(() => { 
+    const currentCulto = this.culto(); 
+    if (!currentCulto) return []; 
+    
+    // Pega a lista nova de itens (se existir) ou usa a antiga para compatibilidade
+    const items = currentCulto.items || currentCulto.songIds.map(id => ({ songId: id, key: '' }));
+
+    return items.map(item => {
+      const song = this.songService.songs().find(s => s.id === item.songId);
+      if (!song) return null;
+      
+      // O tom a ser exibido é: O do dia (item.key) OU o original (song.key)
+      const displayKey = item.key || song.key;
+      
+      return { song, displayKey };
+    }).filter((item): item is { song: Song, displayKey: string | undefined } => !!item);
+  });
+
+  searchResults = computed(() => { 
+    const term = this.searchTerm().toLowerCase(); 
+    const currentIds = this.culto()?.songIds || []; 
+    return this.songService.songs()
+      .filter(s => !currentIds.includes(s.id))
+      .filter(s => s.title.toLowerCase().includes(term) || s.artist.toLowerCase().includes(term))
+      .slice(0, 10); 
+  });
+
+  // Helper para pegar o tom na modal de visualização
+  getKeyForSong(songId: string): string | undefined {
+    const item = this.songsInCulto().find(i => i.song.id === songId);
+    return item?.displayKey;
+  }
+
+  // ADICIONAR AGORA SALVA O TOM ORIGINAL COMO PADRÃO
+  addSong(song: Song) { 
+    // Passamos o tom original da música como padrão para este culto
+    this.songService.addSongToCulto(this.cultoId(), song.id, song.key || ''); 
+    this.searchTerm.set(''); 
+  }
+
+  removeSong(songId: string) { 
+    const c = this.culto();
+    if(c && confirm('Remover esta música do culto?')) { 
+      this.songService.removeSongFromCulto(c, songId); 
+    } 
+  }
+
+  // NOVA FUNÇÃO: Trocar o tom
+  async changeTone(songId: string, currentKey: string | undefined) {
+    const newKey = prompt('Qual o tom para este culto?', currentKey || '');
+    const c = this.culto();
+    if (newKey !== null && c) {
+      // Converte para maiúsculo pra ficar padrão (ex: g -> G)
+      await this.songService.updateCultoTone(c, songId, newKey.toUpperCase());
+    }
+  }
   
-  // FUNÇÃO NOVA: Reordenar
   async moveSong(index: number, direction: number) {
     const c = this.culto();
     if (!c || !c.songIds) return;
-    const newIndex = index + direction;
-    if (newIndex < 0 || newIndex >= c.songIds.length) return;
+    
+    // Precisamos reordenar TANTO a lista simples quanto a lista de itens
     const newIds = [...c.songIds];
-    const temp = newIds[index];
-    newIds[index] = newIds[newIndex];
-    newIds[newIndex] = temp;
-    await this.songService.updateCulto(c.id, { songIds: newIds });
+    const newItems = c.items ? [...c.items] : newIds.map(id => ({ songId: id, key: '' })); // Fallback
+
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= newIds.length) return;
+
+    // Troca na lista de IDs
+    [newIds[index], newIds[newIndex]] = [newIds[newIndex], newIds[index]];
+    
+    // Troca na lista de Itens (que guarda os tons)
+    [newItems[index], newItems[newIndex]] = [newItems[newIndex], newItems[index]];
+
+    await this.songService.updateCulto(c.id, { 
+      songIds: newIds,
+      items: newItems 
+    });
   }
 
-  // --- FUNÇÃO NOVA: PLAYLIST AUTOMÁTICA ▶️ ---
   openPlaylist() {
     const songs = this.songsInCulto();
     const videoIds: string[] = [];
-
-    // Expressão regular para extrair ID do YouTube
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
 
-    songs.forEach(song => {
-      if (song.youtubeUrl) {
-        const match = song.youtubeUrl.match(regExp);
+    songs.forEach(item => {
+      if (item.song.youtubeUrl) {
+        const match = item.song.youtubeUrl.match(regExp);
         if (match && match[2].length === 11) {
           videoIds.push(match[2]);
         }
@@ -316,8 +395,6 @@ export class ServiceDetailComponent {
       alert('Nenhuma música com link do YouTube nesta escala.');
       return;
     }
-
-    // Cria a URL da Playlist Temporária
     const playlistUrl = `https://www.youtube.com/watch_videos?video_ids=${videoIds.join(',')}`;
     window.open(playlistUrl, '_blank');
   }
@@ -354,17 +431,22 @@ export class ServiceDetailComponent {
 
   shareOnWhatsApp() {
     const currentCulto = this.culto();
-    const songs = this.songsInCulto();
+    const songs = this.songsInCulto(); // Agora é uma lista de objetos { song, displayKey }
     if (!currentCulto) return;
+    
     let text = `*CULTO - ${this.formatDate(currentCulto.date)}*\n`;
     if (currentCulto.vocals && currentCulto.vocals.length > 0) { text += `\n*🎤 EQUIPE DE VOCAL:*\n${currentCulto.vocals.join(', ')}\n`; }
+    
     text += `\n*LISTA DE LOUVORES:*\n\n`;
-    songs.forEach((song, index) => {
-      const key = song.key ? `(${song.key})` : '';
-      text += `*${index + 1}. ${song.title}* ${key}\n`;
-      if (song.youtubeUrl) { text += `>> ${song.youtubeUrl}\n`; }
+    
+    songs.forEach((item, index) => {
+      // Usa o tom específico (displayKey)
+      const key = item.displayKey ? `(${item.displayKey})` : '';
+      text += `*${index + 1}. ${item.song.title}* ${key}\n`;
+      if (item.song.youtubeUrl) { text += `>> ${item.song.youtubeUrl}\n`; }
       text += `\n`;
     });
+    
     text += `______________________________\n*Acompanhe a cifra e a letra aqui:*\n${window.location.href}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   }
