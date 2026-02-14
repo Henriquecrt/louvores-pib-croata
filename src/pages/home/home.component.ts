@@ -1,14 +1,15 @@
-import { Component, ChangeDetectionStrategy, signal, inject, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject, OnInit, computed } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
-import { SongService, Song } from '../../services/song.service';
+import { SongService, Song, MemberStats } from '../../services/song.service';
+import { FormsModule } from '@angular/forms'; // Importante para editar o aviso
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="relative flex min-h-screen w-full flex-col overflow-x-hidden transition-colors duration-300 font-display">
@@ -95,7 +96,7 @@ import { SongService, Song } from '../../services/song.service';
               <div class="h-px bg-gray-100 my-1"></div>
               
               <button (click)="handleAuth(); toggleMobileMenu()" class="w-full p-3 rounded-xl bg-gray-900 text-white font-bold text-center shadow-sm">
-                 {{ auth.currentUser() ? 'Sair' : 'Área da Liderança' }}
+                  {{ auth.currentUser() ? 'Sair' : 'Área da Liderança' }}
               </button>
             </nav>
           </div>
@@ -103,7 +104,43 @@ import { SongService, Song } from '../../services/song.service';
       </header>
 
       <main class="flex-grow pt-28">
-        <section class="relative flex flex-col items-center justify-center pt-12 pb-24 px-4 sm:px-6 lg:px-8 bg-hero-pattern">
+        
+        @if (songService.noticeMessage() || auth.currentUser()) {
+          <div class="mx-auto max-w-4xl px-4 sm:px-6 mb-6">
+            <div class="relative overflow-hidden rounded-xl bg-gradient-to-r from-amber-100 to-yellow-50 border border-amber-200 p-4 shadow-sm">
+              <div class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-amber-600 mt-0.5 animate-pulse">campaign</span>
+                <div class="flex-1">
+                  <h3 class="text-sm font-bold text-amber-800 uppercase tracking-wide mb-1">Mural da Equipe</h3>
+                  
+                  @if (auth.currentUser() && isEditingNotice()) {
+                    <textarea 
+                      [(ngModel)]="tempNotice" 
+                      class="w-full p-2 text-sm border border-amber-300 rounded bg-white/80 focus:ring-2 focus:ring-amber-500 outline-none" 
+                      rows="3"
+                      placeholder="Escreva um aviso para a equipe..."></textarea>
+                    <div class="flex gap-2 mt-2 justify-end">
+                      <button (click)="cancelEditNotice()" class="text-xs font-bold text-gray-500 hover:text-gray-700 px-3 py-1">Cancelar</button>
+                      <button (click)="saveNotice()" class="text-xs font-bold bg-amber-600 text-white px-3 py-1 rounded hover:bg-amber-700 transition-colors">Salvar Aviso</button>
+                    </div>
+                  } @else {
+                    <p class="text-amber-900 font-medium whitespace-pre-wrap text-sm md:text-base leading-relaxed">
+                      {{ songService.noticeMessage() || 'Nenhum aviso no momento.' }}
+                    </p>
+                    
+                    @if (auth.currentUser()) {
+                      <button (click)="startEditNotice()" class="absolute top-2 right-2 p-1 text-amber-400 hover:text-amber-700 transition-colors rounded-full hover:bg-amber-200/50" title="Editar Aviso">
+                        <span class="material-symbols-outlined text-sm">edit</span>
+                      </button>
+                    }
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
+        <section class="relative flex flex-col items-center justify-center pt-6 pb-24 px-4 sm:px-6 lg:px-8 bg-hero-pattern">
           <div class="absolute inset-0 bg-gradient-to-b from-transparent to-white/80 pointer-events-none"></div>
           <div class="relative z-10 mx-auto max-w-4xl text-center flex flex-col items-center gap-8">
             
@@ -297,6 +334,10 @@ export class HomeComponent implements OnInit {
   // Estado da Sugestão (Me Ajuda, Deus!)
   suggestionState = signal<{song: Song | null, reason: string}>({ song: null, reason: '' });
 
+  // Estado do Mural de Avisos
+  isEditingNotice = signal(false);
+  tempNotice = '';
+
   isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
   isStandalone = window.matchMedia('(display-mode: standalone)').matches;
 
@@ -324,7 +365,7 @@ export class HomeComponent implements OnInit {
   enableNotifications() {
     if (this.isIOS && !this.isStandalone) {
       alert('⚠️ No iPhone, você precisa instalar o App primeiro!\n\n1. Toque no botão "Compartilhar" (quadrado com seta) do navegador.\n2. Escolha "Adicionar à Tela de Início".\n3. Abra o app novo que apareceu e tente de novo.');
-      return; // Para tudo por aqui
+      return; 
     }
     this.notificationService.requestPermission();
   }
@@ -347,14 +388,11 @@ export class HomeComponent implements OnInit {
     const allCultos = this.songService.cultos();
     const today = new Date();
     const ninetyDaysAgo = new Date();
-    ninetyDaysAgo.setDate(today.getDate() - 90); // 90 dias atrás
+    ninetyDaysAgo.setDate(today.getDate() - 90);
 
-    // 1. Mapear última data de cada música
     const lastDates = new Map<string, Date>();
-    
-    // Como cultos estão ordenados por data (desc), a primeira vez que vemos a música é a última vez que tocou
     for (const culto of allCultos) {
-      const cultoDate = new Date(culto.date + 'T12:00:00'); // Compensar fuso
+      const cultoDate = new Date(culto.date + 'T12:00:00'); 
       for (const songId of culto.songIds) {
         if (!lastDates.has(songId)) {
           lastDates.set(songId, cultoDate);
@@ -362,10 +400,8 @@ export class HomeComponent implements OnInit {
       }
     }
 
-    // 2. Filtrar "Esquecidas"
     const candidates = allSongs.filter(song => {
       const lastDate = lastDates.get(song.id);
-      // Se nunca tocou OU tocou antes de 90 dias atrás
       return !lastDate || lastDate < ninetyDaysAgo;
     });
 
@@ -375,19 +411,32 @@ export class HomeComponent implements OnInit {
       return;
     }
 
-    // 3. Sorteio Aleatório
     const winner = candidates[Math.floor(Math.random() * candidates.length)];
     const lastDate = lastDates.get(winner.id);
     
     let reason = '';
     if (!lastDate) reason = 'Nunca foi tocada nos cultos registrados.';
     else {
-      // Diferença em dias
       const diffTime = Math.abs(today.getTime() - lastDate.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
       reason = `Não é tocada há ${diffDays} dias (desde ${lastDate.toLocaleDateString('pt-BR')}).`;
     }
 
     this.suggestionState.set({ song: winner, reason });
+  }
+
+  // --- LÓGICA DO MURAL DE AVISOS 📌 ---
+  startEditNotice() {
+    this.tempNotice = this.songService.noticeMessage();
+    this.isEditingNotice.set(true);
+  }
+
+  cancelEditNotice() {
+    this.isEditingNotice.set(false);
+  }
+
+  async saveNotice() {
+    await this.songService.updateNoticeMessage(this.tempNotice);
+    this.isEditingNotice.set(false);
   }
 }

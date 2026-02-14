@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { collection, addDoc, doc, deleteDoc, updateDoc, onSnapshot, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
+import { collection, addDoc, doc, deleteDoc, updateDoc, onSnapshot, arrayUnion, arrayRemove, increment, setDoc } from 'firebase/firestore';
 import { db } from '../firebase-config';
 
 export interface Song {
@@ -14,7 +14,6 @@ export interface Song {
   createdAt?: any;
 }
 
-// 👇 NOVA INTERFACE: Guarda o ID da música E o tom usado no dia
 export interface CultoItem {
   songId: string;
   key: string; 
@@ -25,9 +24,17 @@ export interface Culto {
   title: string;
   date: string;
   leader?: string;
-  songIds: string[]; // Mantemos para compatibilidade
-  items?: CultoItem[]; // 👇 NOVA LISTA: Guarda a ordem e os tons
+  songIds: string[]; 
+  items?: CultoItem[]; 
   vocals?: string[]; 
+}
+
+// 👇 NOVA INTERFACE: Estatísticas do Músico
+export interface MemberStats {
+  name: string;
+  totalServices: number;
+  lastServiceDate: string | null;
+  firstServiceDate: string | null;
 }
 
 @Injectable({
@@ -36,6 +43,9 @@ export interface Culto {
 export class SongService {
   readonly songs = signal<Song[]>([]);
   readonly cultos = signal<Culto[]>([]);
+  
+  // 👇 NOVO SINAL: O texto do Mural de Avisos
+  readonly noticeMessage = signal<string>('');
 
   readonly vocalTeam = signal<string[]>([
     'Ana Laura', 'Aparecida', 'Rebeca', 'Coral MCM', 'Sophia', 'Samantha', 'Linéia'
@@ -44,6 +54,7 @@ export class SongService {
   constructor() {
     this.listenToSongs();
     this.listenToCultos();
+    this.listenToNotice(); // <--- Começa a ouvir o aviso
   }
 
   // --- MÚSICAS ---
@@ -83,13 +94,10 @@ export class SongService {
       const cultosData: Culto[] = [];
       snapshot.forEach((doc) => {
         const data = doc.data() as any;
-
-        // 🛡️ MIGRAÇÃO AUTOMÁTICA (NA MEMÓRIA)
-        // Se o culto for antigo e não tiver 'items', criamos baseado no 'songIds'
+        // Migração automática na memória
         if (!data.items && data.songIds) {
           data.items = data.songIds.map((id: string) => ({ songId: id, key: 'Original' }));
         }
-
         cultosData.push({ id: doc.id, ...data } as Culto);
       });
       this.cultos.set(cultosData.sort((a, b) => b.date.localeCompare(a.date)));
@@ -100,7 +108,7 @@ export class SongService {
     await addDoc(collection(db, 'services'), { 
       ...culto, 
       songIds: [], 
-      items: [], // Começa vazio
+      items: [], 
       vocals: culto.vocals || [], 
       createdAt: new Date() 
     });
@@ -114,44 +122,64 @@ export class SongService {
     await deleteDoc(doc(db, 'services', id));
   }
 
-  // --- RELAÇÕES (MÚSICA NO CULTO) ---
+  // --- MURAL DE AVISOS (NOVO 📌) ---
+  private listenToNotice() {
+    // Vamos salvar o aviso numa coleção separada chamada 'settings'
+    onSnapshot(doc(db, 'settings', 'general'), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        this.noticeMessage.set(data['notice'] || '');
+      }
+    });
+  }
 
-  // 👇 ATUALIZADO: Salva nas duas listas (songIds e items)
+  async updateNoticeMessage(message: string) {
+    // Usa setDoc com merge para criar se não existir
+    await setDoc(doc(db, 'settings', 'general'), { notice: message }, { merge: true });
+  }
+
+  // --- ESTATÍSTICAS DA EQUIPE (NOVO 📊) ---
+  getMemberStats(memberName: string): MemberStats {
+    const allCultos = this.cultos();
+    
+    // Filtra cultos onde a pessoa participou
+    const participated = allCultos.filter(c => c.vocals?.includes(memberName));
+    
+    // Ordena por data (do mais recente para o antigo)
+    const sorted = participated.sort((a, b) => b.date.localeCompare(a.date));
+
+    return {
+      name: memberName,
+      totalServices: participated.length,
+      lastServiceDate: sorted.length > 0 ? sorted[0].date : null,
+      firstServiceDate: sorted.length > 0 ? sorted[sorted.length - 1].date : null
+    };
+  }
+
+  // --- RELAÇÕES ---
   async addSongToCulto(cultoId: string, songId: string, defaultKey: string = '') {
     const newItem: CultoItem = { songId, key: defaultKey };
-
     await updateDoc(doc(db, 'services', cultoId), { 
       songIds: arrayUnion(songId),
       items: arrayUnion(newItem)
     });
-    
     await updateDoc(doc(db, 'songs', songId), { views: increment(1) });
   }
 
-  // 👇 ATUALIZADO: Remove da lista de itens corretamente
   async removeSongFromCulto(culto: Culto, songId: string) {
-    // Filtra a lista para remover o item daquela música
     const newItems = (culto.items || []).filter(item => item.songId !== songId);
-
     await updateDoc(doc(db, 'services', culto.id), { 
       songIds: arrayRemove(songId),
-      items: newItems // Atualiza a lista completa
+      items: newItems 
     });
-    
     await updateDoc(doc(db, 'songs', songId), { views: increment(-1) });
   }
 
-  // 👇 NOVA FUNÇÃO MÁGICA: Atualiza o tom só neste culto
   async updateCultoTone(culto: Culto, songId: string, newKey: string) {
-    // 1. Copia a lista atual
     const newItems = [...(culto.items || [])];
-    
-    // 2. Acha a música e troca o tom
     const index = newItems.findIndex(item => item.songId === songId);
     if (index !== -1) {
       newItems[index] = { ...newItems[index], key: newKey };
-      
-      // 3. Salva no banco
       await updateDoc(doc(db, 'services', culto.id), { items: newItems });
     }
   }
@@ -178,7 +206,7 @@ export class SongService {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `backup_louvores_pib_${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `backup_pib_${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     window.URL.revokeObjectURL(url);
   }
@@ -191,11 +219,9 @@ export class SongService {
           const json = JSON.parse(e.target.result);
           let songsToImport: any[] = json.songs || (Array.isArray(json) ? json : []);
           let added = 0, skipped = 0;
-
           for (const song of songsToImport) {
             const { id, views, ...songData } = song; 
             if (!songData.title || !songData.lyrics) continue;
-
             const success = await this.addSong({
               title: songData.title,
               artist: songData.artist || '',
