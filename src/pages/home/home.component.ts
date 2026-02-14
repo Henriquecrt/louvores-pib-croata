@@ -71,14 +71,27 @@ import { FormsModule } from '@angular/forms';
         @if (isMobileMenuOpen()) {
           <div class="md:hidden absolute top-full left-0 right-0 bg-white border-b border-primary/10 shadow-xl animate-[slideIn_0.2s_ease-out]">
             <nav class="flex flex-col p-4 gap-2">
+              @if (deferredPrompt) {
+                <button (click)="installPwa()" class="w-full p-3 mb-2 rounded-xl bg-green-50 text-green-700 font-bold text-center border border-green-200 flex items-center justify-center gap-2 shadow-sm">
+                   <span class="material-symbols-outlined">download</span> Instalar Aplicativo
+                </button>
+              }
+
               <button (click)="enableNotifications(); toggleMobileMenu()" class="w-full p-3 mb-2 rounded-xl bg-blue-50 text-blue-700 font-bold text-center border border-blue-200 flex items-center justify-center gap-2 shadow-sm">
                   <span class="material-symbols-outlined">notifications_active</span> Ativar Notificações
               </button>
               
+              @if (auth.currentUser()) {
+                <button (click)="songService.downloadBackup(); toggleMobileMenu()" class="w-full p-3 mb-2 rounded-xl bg-gray-100 text-gray-700 font-bold text-center border border-gray-200 flex items-center justify-center gap-2 shadow-sm">
+                  <span class="material-symbols-outlined">save</span> Fazer Backup dos Dados
+                </button>
+              }
+
               <a routerLink="/" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-primary font-bold transition-colors">Início</a>
               <a routerLink="/services" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-gray-600 hover:text-primary transition-colors">Cultos</a>
               <a routerLink="/repertoire" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-gray-600 hover:text-primary transition-colors">Repertório</a>
               <a routerLink="/stats" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-orange-50 text-gray-600 hover:text-orange-500 transition-colors flex items-center gap-2"><span class="material-symbols-outlined">equalizer</span> Estatísticas</a>
+              <a routerLink="/about" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-gray-600 hover:text-primary transition-colors">Sobre Nós</a>
               
               <div class="h-px bg-gray-100 my-1"></div>
               
@@ -476,7 +489,7 @@ export class HomeComponent implements OnInit {
     this.selectedMemberDetails.set(null);
   }
 
-  // 👇 CORREÇÃO: LINK DIRETO DO CULTO + EMOJIS SEGUROS
+  // 👇 CORREÇÃO: API WHATSAPP + LINK DIRETO DO CULTO
   shareMemberSchedule() {
     const data = this.selectedMemberDetails();
     if (!data) return;
@@ -502,8 +515,9 @@ export class HomeComponent implements OnInit {
 
     text += `_Gerado pelo App Louvores PIB_`;
     
-    // encodeURIComponent resolve os emojis, mas o window.open garante compatibilidade
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    // Mudança para api.whatsapp.com para corrigir encoding de emojis
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
   }
 
   // Helpers de Data para o Modal
