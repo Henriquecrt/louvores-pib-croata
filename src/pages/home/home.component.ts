@@ -373,7 +373,7 @@ import { FormsModule } from '@angular/forms';
                   
                   <div class="space-y-2 mb-6">
                     @for (culto of data.upcoming; track culto.id) {
-                      <div class="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
+                      <div [routerLink]="['/services', culto.id]" (click)="closeMemberDetails()" class="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100 cursor-pointer hover:bg-green-100 transition-colors relative group">
                         <div class="flex flex-col items-center justify-center h-10 w-10 bg-white rounded-lg border border-green-100 shadow-sm text-green-700">
                           <span class="text-[10px] font-bold uppercase">{{ formatDateMonth(culto.date) }}</span>
                           <span class="text-lg font-black leading-none">{{ formatDateDay(culto.date) }}</span>
@@ -382,6 +382,7 @@ import { FormsModule } from '@angular/forms';
                           <div class="font-bold text-gray-800 text-sm">{{ culto.title }}</div>
                           <div class="text-xs text-gray-500">{{ getWeekDay(culto.date) }}</div>
                         </div>
+                        <span class="material-symbols-outlined text-green-300 absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
                       </div>
                     } @empty {
                       <p class="text-sm text-gray-400 italic text-center py-2">Nenhuma escala futura agendada.</p>
@@ -399,8 +400,9 @@ import { FormsModule } from '@angular/forms';
                     </summary>
                     <div class="mt-3 space-y-2 pl-4 border-l-2 border-gray-100">
                       @for (culto of data.past.slice(0, 5); track culto.id) {
-                        <div class="text-sm text-gray-500 py-1">
-                          <span class="font-bold">{{ formatDate(culto.date) }}</span> - {{ culto.title }}
+                        <div [routerLink]="['/services', culto.id]" (click)="closeMemberDetails()" class="text-sm text-gray-500 py-2 px-2 hover:bg-gray-50 rounded cursor-pointer flex justify-between items-center transition-colors">
+                          <span><span class="font-bold">{{ formatDate(culto.date) }}</span> - {{ culto.title }}</span>
+                          <span class="material-symbols-outlined text-xs text-gray-300">arrow_forward</span>
                         </div>
                       }
                     </div>
