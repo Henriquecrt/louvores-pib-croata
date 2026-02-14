@@ -33,6 +33,11 @@ import { FormsModule } from '@angular/forms';
           </nav>
           
           <div class="flex items-center gap-2 md:hidden">
+            @if (deferredPrompt) {
+              <button (click)="installPwa()" class="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors focus:outline-none animate-pulse border border-green-200 shadow-sm">
+                <span class="material-symbols-outlined">download</span>
+              </button>
+            }
             <button (click)="toggleMobileMenu()" class="flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 transition-colors focus:outline-none">
               <span class="material-symbols-outlined">{{ isMobileMenuOpen() ? 'close' : 'menu' }}</span>
             </button>
@@ -237,9 +242,17 @@ import { FormsModule } from '@angular/forms';
                       @if (i === 1) { <span class="absolute -top-3 -right-2 text-2xl drop-shadow-sm">🥈</span> }
                       @if (i === 2) { <span class="absolute -top-3 -right-2 text-2xl drop-shadow-sm">🥉</span> }
 
-                      <div class="h-12 w-12 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center font-bold text-lg mb-3 shadow-inner group-hover/card:from-orange-100 group-hover/card:to-orange-50 group-hover/card:text-orange-600 transition-colors">
-                        {{ member.name.charAt(0) }}
+                      <div class="h-16 w-16 rounded-full overflow-hidden mb-3 shadow-md border-2 border-white group-hover/card:border-orange-200 transition-colors bg-gray-100 relative">
+                        <img [src]="'assets/equipe/' + member.name + '.jpg'" 
+                             (error)="handleImageError($event)" 
+                             alt="{{member.name}}" 
+                             class="h-full w-full object-cover">
+                        
+                        <div class="fallback-initial absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center font-bold text-xl hidden">
+                          {{ member.name.charAt(0) }}
+                        </div>
                       </div>
+
                       <div class="font-bold text-gray-800 text-sm truncate w-full text-center group-hover/card:text-primary transition-colors">{{ member.name }}</div>
                       <div class="text-xs text-gray-500 font-medium bg-gray-50 px-2 py-0.5 rounded-full mt-1 border border-gray-100">{{ member.count }} escalas</div>
                     </div>
@@ -255,7 +268,7 @@ import { FormsModule } from '@angular/forms';
           </div>
 
           <div class="relative mt-24 w-full max-w-5xl mx-auto px-4">
-            <div class="relative rounded-2xl bg-gray-900/5 p-2 ring-1 ring-inset ring-gray-900/10 lg:rounded-3xl lg:p-4">
+             <div class="relative rounded-2xl bg-gray-900/5 p-2 ring-1 ring-inset ring-gray-900/10 lg:rounded-3xl lg:p-4">
               <div class="overflow-hidden rounded-xl bg-white shadow-2xl border border-gray-100 relative aspect-[16/9] md:aspect-[21/9] flex items-center justify-center bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAqWg9vaHjwO3kSoP6lhHDdrObQ7BRnHQue95LVR-bq4-fOTsdjV_ApaaS0TZJAxIxklQgS4u4_y6eDX3Cec7HjCTmZzbiZUSg_8uk-Kp_mIXsnxEYQkd05_agNiw0caZzPsSb6mmzQwH-CRW3XpCsQBk0f78l9t5oF1Ei587bO4QBGMwh0XrQguGts9KqIWukcewXddgbIQ-r7SQ1KvAYIgkZdpfn3QCtgNyU8JSy1xm3EqbQEOucOq_EzkwubNnO4DM6cuR5O7eX6');">
                 <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
                 
@@ -396,6 +409,19 @@ export class HomeComponent implements OnInit {
       e.preventDefault();
       this.deferredPrompt = e;
     });
+  }
+
+  // --- Função para tratar erro na imagem (Fallback) ---
+  handleImageError(event: any) {
+    const imgElement = event.target;
+    imgElement.style.display = 'none'; // Esconde a imagem quebrada
+    
+    // Mostra a inicial (que está na div seguinte)
+    const fallbackDiv = imgElement.nextElementSibling;
+    if (fallbackDiv) {
+      fallbackDiv.classList.remove('hidden');
+      fallbackDiv.classList.add('flex');
+    }
   }
 
   installPwa() {
