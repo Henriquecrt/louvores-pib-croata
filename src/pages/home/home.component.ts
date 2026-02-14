@@ -3,7 +3,7 @@ import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
-import { SongService, Song } from '../../services/song.service';
+import { SongService, Song, Culto } from '../../services/song.service';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -71,27 +71,14 @@ import { FormsModule } from '@angular/forms';
         @if (isMobileMenuOpen()) {
           <div class="md:hidden absolute top-full left-0 right-0 bg-white border-b border-primary/10 shadow-xl animate-[slideIn_0.2s_ease-out]">
             <nav class="flex flex-col p-4 gap-2">
-              @if (deferredPrompt) {
-                <button (click)="installPwa()" class="w-full p-3 mb-2 rounded-xl bg-green-50 text-green-700 font-bold text-center border border-green-200 flex items-center justify-center gap-2 shadow-sm">
-                   <span class="material-symbols-outlined">download</span> Instalar Aplicativo
-                </button>
-              }
-
               <button (click)="enableNotifications(); toggleMobileMenu()" class="w-full p-3 mb-2 rounded-xl bg-blue-50 text-blue-700 font-bold text-center border border-blue-200 flex items-center justify-center gap-2 shadow-sm">
                   <span class="material-symbols-outlined">notifications_active</span> Ativar Notificações
               </button>
               
-              @if (auth.currentUser()) {
-                <button (click)="songService.downloadBackup(); toggleMobileMenu()" class="w-full p-3 mb-2 rounded-xl bg-gray-100 text-gray-700 font-bold text-center border border-gray-200 flex items-center justify-center gap-2 shadow-sm">
-                  <span class="material-symbols-outlined">save</span> Fazer Backup dos Dados
-                </button>
-              }
-
               <a routerLink="/" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-primary font-bold transition-colors">Início</a>
               <a routerLink="/services" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-gray-600 hover:text-primary transition-colors">Cultos</a>
               <a routerLink="/repertoire" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-gray-600 hover:text-primary transition-colors">Repertório</a>
               <a routerLink="/stats" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-orange-50 text-gray-600 hover:text-orange-500 transition-colors flex items-center gap-2"><span class="material-symbols-outlined">equalizer</span> Estatísticas</a>
-              <a routerLink="/about" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-gray-600 hover:text-primary transition-colors">Sobre Nós</a>
               
               <div class="h-px bg-gray-100 my-1"></div>
               
@@ -236,13 +223,14 @@ import { FormsModule } from '@angular/forms';
                 
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
                   @for (member of topMembers(); track member.name; let i = $index) {
-                    <div class="flex flex-col items-center p-4 rounded-xl bg-white border border-gray-100 shadow-sm relative group/card hover:-translate-y-1 transition-all duration-300 hover:shadow-md hover:border-orange-200">
+                    
+                    <button (click)="viewMemberDetails(member)" class="flex flex-col items-center p-4 rounded-xl bg-white border border-gray-100 shadow-sm relative group/card hover:-translate-y-1 transition-all duration-300 hover:shadow-md hover:border-orange-200 cursor-pointer active:scale-95 w-full">
                       
                       @if (i === 0) { <span class="absolute -top-3 -right-2 text-2xl drop-shadow-sm animate-[bounce_2s_infinite]">🥇</span> }
                       @if (i === 1) { <span class="absolute -top-3 -right-2 text-2xl drop-shadow-sm">🥈</span> }
                       @if (i === 2) { <span class="absolute -top-3 -right-2 text-2xl drop-shadow-sm">🥉</span> }
 
-                      <div class="h-16 w-16 rounded-full overflow-hidden mb-3 shadow-md border-2 border-white group-hover/card:border-orange-200 transition-colors bg-gray-100 relative">
+                      <div class="h-16 w-16 rounded-full overflow-hidden mb-3 shadow-md border-2 border-white group-hover/card:border-orange-200 transition-colors bg-gray-100 relative pointer-events-none">
                         <img [src]="'assets/equipe/' + member.name + '.jpg'" 
                              (error)="handleImageError($event)" 
                              alt="{{member.name}}" 
@@ -253,15 +241,17 @@ import { FormsModule } from '@angular/forms';
                         </div>
                       </div>
 
-                      <div class="font-bold text-gray-800 text-sm truncate w-full text-center group-hover/card:text-primary transition-colors">{{ member.name }}</div>
-                      <div class="text-xs text-gray-500 font-medium bg-gray-50 px-2 py-0.5 rounded-full mt-1 border border-gray-100">{{ member.count }} escalas</div>
-                    </div>
+                      <div class="font-bold text-gray-800 text-sm truncate w-full text-center group-hover/card:text-primary transition-colors pointer-events-none">{{ member.name }}</div>
+                      <div class="text-xs text-gray-500 font-medium bg-gray-50 px-2 py-0.5 rounded-full mt-1 border border-gray-100 pointer-events-none">{{ member.count }} escalas</div>
+                    </button>
                   } @empty {
                     <div class="col-span-full text-gray-400 text-sm py-4 italic">
                       Comece a criar escalas para ver o ranking aqui!
                     </div>
                   }
                 </div>
+                
+                <p class="text-center text-[10px] text-gray-400 mt-4 uppercase tracking-widest font-bold">Toque na foto para ver a agenda</p>
               </div>
             </div>
 
@@ -271,30 +261,10 @@ import { FormsModule } from '@angular/forms';
              <div class="relative rounded-2xl bg-gray-900/5 p-2 ring-1 ring-inset ring-gray-900/10 lg:rounded-3xl lg:p-4">
               <div class="overflow-hidden rounded-xl bg-white shadow-2xl border border-gray-100 relative aspect-[16/9] md:aspect-[21/9] flex items-center justify-center bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAqWg9vaHjwO3kSoP6lhHDdrObQ7BRnHQue95LVR-bq4-fOTsdjV_ApaaS0TZJAxIxklQgS4u4_y6eDX3Cec7HjCTmZzbiZUSg_8uk-Kp_mIXsnxEYQkd05_agNiw0caZzPsSb6mmzQwH-CRW3XpCsQBk0f78l9t5oF1Ei587bO4QBGMwh0XrQguGts9KqIWukcewXddgbIQ-r7SQ1KvAYIgkZdpfn3QCtgNyU8JSy1xm3EqbQEOucOq_EzkwubNnO4DM6cuR5O7eX6');">
                 <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
-                
                 <div class="absolute inset-0 flex items-center justify-center p-4 overflow-hidden">
-                  <div class="grid grid-cols-3 gap-4 md:gap-6 min-w-[700px] md:min-w-0 md:w-full max-w-4xl scale-[0.42] md:scale-110 origin-center transition-transform">
-                    <div class="flex flex-col gap-3 p-5 bg-white/95 backdrop-blur rounded-xl shadow-xl transform rotate-[-6deg] translate-y-4 hover:rotate-0 transition-transform duration-500 border border-white/20">
-                      <div class="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary"><span class="material-symbols-outlined text-sm">music_note</span></div>
-                      <div class="space-y-2"><div class="h-2 w-16 bg-gray-200 rounded"></div><div class="h-4 w-3/4 bg-gray-800 rounded"></div></div>
-                      <div class="mt-2 h-1 w-full bg-primary rounded-full"></div>
-                    </div>
-                    
-                    <div class="flex flex-col gap-4 p-6 bg-white/100 backdrop-blur-xl rounded-2xl shadow-2xl z-10 border border-gray-100">
-                      <div class="flex items-center justify-between border-b border-gray-100 pb-3"><span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Culto de Domingo</span><span class="h-2 w-2 rounded-full bg-green-500"></span></div>
-                      <div class="space-y-3">
-                        <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"><span class="text-gray-400 font-mono text-xs">01</span><div class="flex-1"><div class="text-sm font-bold text-gray-800">Grande é o Senhor</div><div class="text-xs text-gray-500">Tom: G</div></div><span class="material-symbols-outlined text-gray-400 text-sm">drag_handle</span></div>
-                        <div class="flex items-center gap-3 p-2 rounded-lg bg-primary/5 border border-primary/10 cursor-pointer"><span class="text-primary font-mono text-xs">02</span><div class="flex-1"><div class="text-sm font-bold text-gray-800">Caminho no Deserto</div><div class="text-xs text-primary">Tom: A • Ativo</div></div><span class="material-symbols-outlined text-primary text-sm">equalizer</span></div>
-                        <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"><span class="text-gray-400 font-mono text-xs">03</span><div class="flex-1"><div class="text-sm font-bold text-gray-800">Bondade de Deus</div><div class="text-xs text-gray-500">Tom: D</div></div><span class="material-symbols-outlined text-gray-400 text-sm">drag_handle</span></div>
-                      </div>
-                    </div>
-                    
-                    <div class="flex flex-col gap-3 p-5 bg-white/95 backdrop-blur rounded-xl shadow-xl transform rotate-[6deg] translate-y-4 hover:rotate-0 transition-transform duration-500 border border-white/20">
-                      <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600"><span class="material-symbols-outlined text-sm">group</span></div>
-                      <div class="space-y-2"><div class="h-2 w-12 bg-gray-200 rounded"></div><div class="h-4 w-2/3 bg-gray-800 rounded"></div></div>
-                      <div class="mt-2 flex -space-x-2"><div class="h-6 w-6 rounded-full bg-gray-300 border-2 border-white"></div><div class="h-6 w-6 rounded-full bg-gray-400 border-2 border-white"></div></div>
-                    </div>
-                  </div>
+                   <div class="text-white font-bold text-lg md:text-2xl drop-shadow-md text-center">
+                      Louvor que transforma, adoração que liberta.
+                   </div>
                 </div>
               </div>
             </div>
@@ -361,6 +331,77 @@ import { FormsModule } from '@angular/forms';
           <p class="text-sm text-gray-400">© 2026 Primeira Igreja Batista em Croatá. Todos os direitos reservados.</p>
         </div>
       </footer>
+
+      @if (selectedMemberDetails(); as data) {
+        <div class="fixed inset-0 z-[100] overflow-y-auto" role="dialog" aria-modal="true">
+          <div class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" (click)="closeMemberDetails()"></div>
+          
+          <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 w-full max-w-md animate-[scaleIn_0.2s_ease-out]">
+              
+              <div class="relative h-24 bg-gradient-to-r from-orange-400 to-orange-600">
+                <button (click)="closeMemberDetails()" class="absolute top-3 right-3 text-white/80 hover:text-white p-1 rounded-full hover:bg-white/20 transition-colors">
+                  <span class="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              
+              <div class="px-6 pb-6 -mt-12 flex flex-col items-center">
+                <div class="h-24 w-24 rounded-full border-4 border-white shadow-lg bg-white overflow-hidden mb-3 relative">
+                   <img [src]="'assets/equipe/' + data.name + '.jpg'" (error)="handleImageError($event)" class="h-full w-full object-cover">
+                   <div class="fallback-initial absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center font-bold text-3xl hidden">{{ data.name.charAt(0) }}</div>
+                </div>
+                
+                <h3 class="text-2xl font-black text-gray-900">{{ data.name }}</h3>
+                <p class="text-gray-500 text-sm font-medium">{{ data.past.length + data.upcoming.length }} escalas no total</p>
+
+                <div class="w-full mt-6 text-left">
+                  <h4 class="text-xs font-bold text-green-600 uppercase tracking-widest mb-3 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">event_upcoming</span> Próximas Escalas
+                  </h4>
+                  
+                  <div class="space-y-2 mb-6">
+                    @for (culto of data.upcoming; track culto.id) {
+                      <div class="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
+                        <div class="flex flex-col items-center justify-center h-10 w-10 bg-white rounded-lg border border-green-100 shadow-sm text-green-700">
+                          <span class="text-[10px] font-bold uppercase">{{ formatDateMonth(culto.date) }}</span>
+                          <span class="text-lg font-black leading-none">{{ formatDateDay(culto.date) }}</span>
+                        </div>
+                        <div>
+                          <div class="font-bold text-gray-800 text-sm">{{ culto.title }}</div>
+                          <div class="text-xs text-gray-500">{{ getWeekDay(culto.date) }}</div>
+                        </div>
+                      </div>
+                    } @empty {
+                      <p class="text-sm text-gray-400 italic text-center py-2">Nenhuma escala futura agendada.</p>
+                    }
+                  </div>
+
+                  <button (click)="shareMemberSchedule()" class="w-full py-3 bg-[#25D366] hover:bg-[#128C7E] text-white font-bold rounded-xl shadow-lg shadow-green-900/10 transition-all active:scale-95 flex items-center justify-center gap-2 mb-6">
+                    <span class="material-symbols-outlined">share</span> Enviar Escala no WhatsApp
+                  </button>
+
+                  <details class="group">
+                    <summary class="flex items-center justify-between cursor-pointer list-none text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors">
+                      <span>Ver Histórico Recente</span>
+                      <span class="material-symbols-outlined transition-transform group-open:rotate-180">expand_more</span>
+                    </summary>
+                    <div class="mt-3 space-y-2 pl-4 border-l-2 border-gray-100">
+                      @for (culto of data.past.slice(0, 5); track culto.id) {
+                        <div class="text-sm text-gray-500 py-1">
+                          <span class="font-bold">{{ formatDate(culto.date) }}</span> - {{ culto.title }}
+                        </div>
+                      }
+                    </div>
+                  </details>
+
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      }
+
     </div>
   `
 })
@@ -374,29 +415,31 @@ export class HomeComponent implements OnInit {
   deferredPrompt: any = null;
 
   suggestionState = signal<{song: Song | null, reason: string}>({ song: null, reason: '' });
-
-  // Estado do Mural de Avisos
   isEditingNotice = signal(false);
   tempNotice = '';
+
+  // 🟢 ESTADO DO MODAL DE MEMBRO
+  selectedMemberDetails = signal<{
+    name: string;
+    upcoming: Culto[];
+    past: Culto[];
+  } | null>(null);
 
   isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
   isStandalone = window.matchMedia('(display-mode: standalone)').matches;
 
-  // 🏆 CALCULA O RANKING DA EQUIPE (TOP 4) 🏆
   topMembers = computed(() => {
     const cultos = this.songService.cultos();
     const countMap = new Map<string, number>();
-
     cultos.forEach(culto => {
       culto.vocals?.forEach(member => {
         countMap.set(member, (countMap.get(member) || 0) + 1);
       });
     });
-
     return Array.from(countMap.entries())
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, 4); // Pega os top 4
+      .slice(0, 4);
   });
 
   constructor() {
@@ -411,12 +454,67 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  // --- Função para tratar erro na imagem (Fallback) ---
+  // --- Lógica do Modal de Membro ---
+  viewMemberDetails(member: { name: string, count: number }) {
+    console.log('Clicou no membro:', member); // DEBUG
+    const allCultos = this.songService.cultos();
+    const memberCultos = allCultos.filter(c => c.vocals?.includes(member.name));
+    
+    memberCultos.sort((a, b) => b.date.localeCompare(a.date));
+
+    const today = new Date().toISOString().split('T')[0];
+    const upcoming = memberCultos.filter(c => c.date >= today).reverse();
+    const past = memberCultos.filter(c => c.date < today);
+
+    this.selectedMemberDetails.set({
+      name: member.name,
+      upcoming,
+      past
+    });
+  }
+
+  closeMemberDetails() {
+    this.selectedMemberDetails.set(null);
+  }
+
+  shareMemberSchedule() {
+    const data = this.selectedMemberDetails();
+    if (!data) return;
+
+    let text = `Olá *${data.name}*! 👋\n\nConfira suas *Próximas Escalas* na PIB Croatá:\n\n`;
+
+    if (data.upcoming.length === 0) {
+      text += `_Nenhuma escala agendada por enquanto._\n`;
+    } else {
+      data.upcoming.forEach(c => {
+        const date = this.formatDate(c.date);
+        text += `🗓️ *${date}* - ${c.title}\n`;
+      });
+    }
+
+    text += `\nVerifique o repertório completo no app! 🎶`;
+    
+    // Abre o WhatsApp
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  }
+
+  // Helpers de Data para o Modal
+  formatDate(dateStr: string) { const [y, m, d] = dateStr.split('-'); return `${d}/${m}/${y}`; }
+  formatDateDay(dateStr: string) { return dateStr.split('-')[2]; }
+  formatDateMonth(dateStr: string) { 
+    const months = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+    return months[parseInt(dateStr.split('-')[1]) - 1]; 
+  }
+  getWeekDay(dateStr: string) {
+    const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    // Gambiarra do fuso horário para garantir o dia certo
+    return days[new Date(dateStr + 'T12:00:00').getDay()];
+  }
+
+  // --- Outras Funções ---
   handleImageError(event: any) {
     const imgElement = event.target;
-    imgElement.style.display = 'none'; // Esconde a imagem quebrada
-    
-    // Mostra a inicial (que está na div seguinte)
+    imgElement.style.display = 'none';
     const fallbackDiv = imgElement.nextElementSibling;
     if (fallbackDiv) {
       fallbackDiv.classList.remove('hidden');
@@ -427,33 +525,25 @@ export class HomeComponent implements OnInit {
   installPwa() {
     if (this.deferredPrompt) {
       this.deferredPrompt.prompt();
-      this.deferredPrompt.userChoice.then((choiceResult: any) => {
-        this.deferredPrompt = null;
-      });
+      this.deferredPrompt.userChoice.then(() => { this.deferredPrompt = null; });
     }
   }
 
   enableNotifications() {
     if (this.isIOS && !this.isStandalone) {
-      alert('⚠️ No iPhone, você precisa instalar o App primeiro!\n\n1. Toque no botão "Compartilhar" (quadrado com seta) do navegador.\n2. Escolha "Adicionar à Tela de Início".\n3. Abra o app novo que apareceu e tente de novo.');
+      alert('⚠️ No iPhone, você precisa instalar o App primeiro!\n\n1. Toque no botão "Compartilhar".\n2. Escolha "Adicionar à Tela de Início".');
       return; 
     }
     this.notificationService.requestPermission();
   }
 
   handleAuth() {
-    if (this.auth.currentUser()) {
-      this.auth.logout(); 
-    } else {
-      this.router.navigate(['/login']);
-    }
+    if (this.auth.currentUser()) { this.auth.logout(); } 
+    else { this.router.navigate(['/login']); }
   }
 
-  toggleMobileMenu() {
-    this.isMobileMenuOpen.update(val => !val);
-  }
+  toggleMobileMenu() { this.isMobileMenuOpen.update(val => !val); }
 
-  // --- LÓGICA DO SORTEIO (ME AJUDA, DEUS!) 🎲 ---
   generateSuggestion() {
     const allSongs = this.songService.songs();
     const allCultos = this.songService.cultos();
@@ -465,12 +555,9 @@ export class HomeComponent implements OnInit {
     for (const culto of allCultos) {
       const cultoDate = new Date(culto.date + 'T12:00:00'); 
       for (const songId of culto.songIds) {
-        if (!lastDates.has(songId)) {
-          lastDates.set(songId, cultoDate);
-        }
+        if (!lastDates.has(songId)) { lastDates.set(songId, cultoDate); }
       }
     }
-
     const candidates = allSongs.filter(song => {
       const lastDate = lastDates.get(song.id);
       return !lastDate || lastDate < ninetyDaysAgo;
@@ -478,36 +565,17 @@ export class HomeComponent implements OnInit {
 
     if (candidates.length === 0) {
       this.suggestionState.set({ song: null, reason: 'O repertório está super em dia! Parabéns!' });
-      alert('Parabéns! Nenhuma música está esquecida (todas foram tocadas nos últimos 3 meses).');
+      alert('Parabéns! Nenhuma música está esquecida.');
       return;
     }
 
     const winner = candidates[Math.floor(Math.random() * candidates.length)];
     const lastDate = lastDates.get(winner.id);
-    
-    let reason = '';
-    if (!lastDate) reason = 'Nunca foi tocada nos cultos registrados.';
-    else {
-      const diffTime = Math.abs(today.getTime() - lastDate.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-      reason = `Não é tocada há ${diffDays} dias (desde ${lastDate.toLocaleDateString('pt-BR')}).`;
-    }
-
+    let reason = !lastDate ? 'Nunca foi tocada.' : `Não é tocada há ${Math.ceil(Math.abs(today.getTime() - lastDate.getTime()) / (1000 * 3600 * 24))} dias.`;
     this.suggestionState.set({ song: winner, reason });
   }
 
-  // --- LÓGICA DO MURAL DE AVISOS 📌 ---
-  startEditNotice() {
-    this.tempNotice = this.songService.noticeMessage();
-    this.isEditingNotice.set(true);
-  }
-
-  cancelEditNotice() {
-    this.isEditingNotice.set(false);
-  }
-
-  async saveNotice() {
-    await this.songService.updateNoticeMessage(this.tempNotice);
-    this.isEditingNotice.set(false);
-  }
+  startEditNotice() { this.tempNotice = this.songService.noticeMessage(); this.isEditingNotice.set(true); }
+  cancelEditNotice() { this.isEditingNotice.set(false); }
+  async saveNotice() { await this.songService.updateNoticeMessage(this.tempNotice); this.isEditingNotice.set(false); }
 }
