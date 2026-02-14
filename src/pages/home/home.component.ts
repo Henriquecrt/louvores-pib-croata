@@ -161,34 +161,6 @@ import { FormsModule } from '@angular/forms';
               Bem-vindo à Primeira Igreja Batista em Croatá. Acompanhe nossas escalas, aprenda os louvores e participe dos nossos cultos.
             </p>
 
-            <div class="w-full max-w-3xl mx-auto mt-6">
-              <div class="bg-white/80 backdrop-blur rounded-2xl p-6 border border-gray-200 shadow-xl">
-                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center justify-center gap-2">
-                  <span class="material-symbols-outlined text-orange-500">trophy</span> 
-                  Destaques da Equipe
-                </h3>
-                
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  @for (member of topMembers(); track member.name; let i = $index) {
-                    <div class="flex flex-col items-center p-3 rounded-xl bg-gray-50 border border-gray-100 relative group hover:-translate-y-1 transition-transform duration-300">
-                      
-                      @if (i === 0) { <span class="absolute -top-2 -right-2 text-xl">🥇</span> }
-                      @if (i === 1) { <span class="absolute -top-2 -right-2 text-xl">🥈</span> }
-                      @if (i === 2) { <span class="absolute -top-2 -right-2 text-xl">🥉</span> }
-
-                      <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-green-600 text-white flex items-center justify-center font-bold text-lg mb-2 shadow-lg shadow-green-200">
-                        {{ member.name.charAt(0) }}
-                      </div>
-                      <div class="font-bold text-gray-800 text-sm truncate w-full text-center">{{ member.name }}</div>
-                      <div class="text-xs text-gray-500 font-medium">{{ member.count }} escalas</div>
-                    </div>
-                  } @empty {
-                    <div class="col-span-full text-gray-400 text-sm py-2">Nenhuma escala registrada ainda.</div>
-                  }
-                </div>
-              </div>
-            </div>
-
             @if (auth.currentUser()) {
               <div class="w-full max-w-sm mx-auto my-2 animate-[fadeIn_0.5s_ease-out]">
                 @if (!suggestionState().song) {
@@ -246,9 +218,43 @@ import { FormsModule } from '@angular/forms';
                 Ranking
               </button>
             </div>
+
+            <div class="w-full max-w-3xl mx-auto mt-12 animate-[fadeIn_0.8s_ease-out]">
+              <div class="bg-white/80 backdrop-blur rounded-2xl p-6 border border-gray-200 shadow-xl relative overflow-hidden group">
+                <div class="absolute -right-10 -top-10 w-32 h-32 bg-orange-50 rounded-full blur-3xl opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                <div class="absolute -left-10 -bottom-10 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-50 group-hover:opacity-100 transition-opacity"></div>
+
+                <h3 class="text-lg font-bold text-gray-800 mb-6 flex items-center justify-center gap-2 relative z-10">
+                  <span class="material-symbols-outlined text-orange-500 text-2xl animate-pulse">trophy</span> 
+                  <span class="bg-gradient-to-r from-orange-600 to-orange-400 bg-clip-text text-transparent">Destaques da Equipe</span>
+                </h3>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
+                  @for (member of topMembers(); track member.name; let i = $index) {
+                    <div class="flex flex-col items-center p-4 rounded-xl bg-white border border-gray-100 shadow-sm relative group/card hover:-translate-y-1 transition-all duration-300 hover:shadow-md hover:border-orange-200">
+                      
+                      @if (i === 0) { <span class="absolute -top-3 -right-2 text-2xl drop-shadow-sm animate-[bounce_2s_infinite]">🥇</span> }
+                      @if (i === 1) { <span class="absolute -top-3 -right-2 text-2xl drop-shadow-sm">🥈</span> }
+                      @if (i === 2) { <span class="absolute -top-3 -right-2 text-2xl drop-shadow-sm">🥉</span> }
+
+                      <div class="h-12 w-12 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center font-bold text-lg mb-3 shadow-inner group-hover/card:from-orange-100 group-hover/card:to-orange-50 group-hover/card:text-orange-600 transition-colors">
+                        {{ member.name.charAt(0) }}
+                      </div>
+                      <div class="font-bold text-gray-800 text-sm truncate w-full text-center group-hover/card:text-primary transition-colors">{{ member.name }}</div>
+                      <div class="text-xs text-gray-500 font-medium bg-gray-50 px-2 py-0.5 rounded-full mt-1 border border-gray-100">{{ member.count }} escalas</div>
+                    </div>
+                  } @empty {
+                    <div class="col-span-full text-gray-400 text-sm py-4 italic">
+                      Comece a criar escalas para ver o ranking aqui!
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+
           </div>
 
-          <div class="relative mt-16 w-full max-w-5xl mx-auto px-4">
+          <div class="relative mt-24 w-full max-w-5xl mx-auto px-4">
             <div class="relative rounded-2xl bg-gray-900/5 p-2 ring-1 ring-inset ring-gray-900/10 lg:rounded-3xl lg:p-4">
               <div class="overflow-hidden rounded-xl bg-white shadow-2xl border border-gray-100 relative aspect-[16/9] md:aspect-[21/9] flex items-center justify-center bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAqWg9vaHjwO3kSoP6lhHDdrObQ7BRnHQue95LVR-bq4-fOTsdjV_ApaaS0TZJAxIxklQgS4u4_y6eDX3Cec7HjCTmZzbiZUSg_8uk-Kp_mIXsnxEYQkd05_agNiw0caZzPsSb6mmzQwH-CRW3XpCsQBk0f78l9t5oF1Ei587bO4QBGMwh0XrQguGts9KqIWukcewXddgbIQ-r7SQ1KvAYIgkZdpfn3QCtgNyU8JSy1xm3EqbQEOucOq_EzkwubNnO4DM6cuR5O7eX6');">
                 <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
