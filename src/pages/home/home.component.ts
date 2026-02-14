@@ -223,7 +223,6 @@ import { FormsModule } from '@angular/forms';
                 
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
                   @for (member of topMembers(); track member.name; let i = $index) {
-                    
                     <button (click)="viewMemberDetails(member)" class="flex flex-col items-center p-4 rounded-xl bg-white border border-gray-100 shadow-sm relative group/card hover:-translate-y-1 transition-all duration-300 hover:shadow-md hover:border-orange-200 cursor-pointer active:scale-95 w-full">
                       
                       @if (i === 0) { <span class="absolute -top-3 -right-2 text-2xl drop-shadow-sm animate-[bounce_2s_infinite]">🥇</span> }
@@ -477,9 +476,13 @@ export class HomeComponent implements OnInit {
     this.selectedMemberDetails.set(null);
   }
 
+  // 👇 CORREÇÃO: LINK DIRETO DO CULTO + EMOJIS SEGUROS
   shareMemberSchedule() {
     const data = this.selectedMemberDetails();
     if (!data) return;
+
+    // Pega o endereço base do site (ex: https://louvores-gpv.web.app)
+    const baseUrl = window.location.href.split('#')[0];
 
     let text = `Olá *${data.name}*! 👋\n\nConfira suas *Próximas Escalas* na PIB Croatá:\n\n`;
 
@@ -488,13 +491,18 @@ export class HomeComponent implements OnInit {
     } else {
       data.upcoming.forEach(c => {
         const date = this.formatDate(c.date);
+        
+        // Monta o link para este culto específico
+        const link = `${baseUrl}#/services/${c.id}`;
+
         text += `🗓️ *${date}* - ${c.title}\n`;
+        text += `🔗 ${link}\n\n`;
       });
     }
 
-    text += `\nVerifique o repertório completo no app! 🎶`;
+    text += `_Gerado pelo App Louvores PIB_`;
     
-    // Abre o WhatsApp
+    // encodeURIComponent resolve os emojis, mas o window.open garante compatibilidade
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   }
 
