@@ -3,8 +3,8 @@ import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
-import { SongService, Song, MemberStats } from '../../services/song.service';
-import { FormsModule } from '@angular/forms'; // Importante para editar o aviso
+import { SongService, Song } from '../../services/song.service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-home',
@@ -33,11 +33,6 @@ import { FormsModule } from '@angular/forms'; // Importante para editar o aviso
           </nav>
           
           <div class="flex items-center gap-2 md:hidden">
-            @if (deferredPrompt) {
-              <button (click)="installPwa()" class="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors focus:outline-none animate-pulse border border-green-200 shadow-sm">
-                <span class="material-symbols-outlined">download</span>
-              </button>
-            }
             <button (click)="toggleMobileMenu()" class="flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 transition-colors focus:outline-none">
               <span class="material-symbols-outlined">{{ isMobileMenuOpen() ? 'close' : 'menu' }}</span>
             </button>
@@ -165,6 +160,34 @@ import { FormsModule } from '@angular/forms'; // Importante para editar o aviso
             <p class="max-w-2xl text-lg leading-relaxed text-gray-600 md:text-xl">
               Bem-vindo à Primeira Igreja Batista em Croatá. Acompanhe nossas escalas, aprenda os louvores e participe dos nossos cultos.
             </p>
+
+            <div class="w-full max-w-3xl mx-auto mt-6">
+              <div class="bg-white/80 backdrop-blur rounded-2xl p-6 border border-gray-200 shadow-xl">
+                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center justify-center gap-2">
+                  <span class="material-symbols-outlined text-orange-500">trophy</span> 
+                  Destaques da Equipe
+                </h3>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  @for (member of topMembers(); track member.name; let i = $index) {
+                    <div class="flex flex-col items-center p-3 rounded-xl bg-gray-50 border border-gray-100 relative group hover:-translate-y-1 transition-transform duration-300">
+                      
+                      @if (i === 0) { <span class="absolute -top-2 -right-2 text-xl">🥇</span> }
+                      @if (i === 1) { <span class="absolute -top-2 -right-2 text-xl">🥈</span> }
+                      @if (i === 2) { <span class="absolute -top-2 -right-2 text-xl">🥉</span> }
+
+                      <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-green-600 text-white flex items-center justify-center font-bold text-lg mb-2 shadow-lg shadow-green-200">
+                        {{ member.name.charAt(0) }}
+                      </div>
+                      <div class="font-bold text-gray-800 text-sm truncate w-full text-center">{{ member.name }}</div>
+                      <div class="text-xs text-gray-500 font-medium">{{ member.count }} escalas</div>
+                    </div>
+                  } @empty {
+                    <div class="col-span-full text-gray-400 text-sm py-2">Nenhuma escala registrada ainda.</div>
+                  }
+                </div>
+              </div>
+            </div>
 
             @if (auth.currentUser()) {
               <div class="w-full max-w-sm mx-auto my-2 animate-[fadeIn_0.5s_ease-out]">
@@ -331,7 +354,6 @@ export class HomeComponent implements OnInit {
   isMobileMenuOpen = signal(false);
   deferredPrompt: any = null;
 
-  // Estado da Sugestão (Me Ajuda, Deus!)
   suggestionState = signal<{song: Song | null, reason: string}>({ song: null, reason: '' });
 
   // Estado do Mural de Avisos
@@ -340,6 +362,23 @@ export class HomeComponent implements OnInit {
 
   isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
   isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+
+  // 🏆 CALCULA O RANKING DA EQUIPE (TOP 4) 🏆
+  topMembers = computed(() => {
+    const cultos = this.songService.cultos();
+    const countMap = new Map<string, number>();
+
+    cultos.forEach(culto => {
+      culto.vocals?.forEach(member => {
+        countMap.set(member, (countMap.get(member) || 0) + 1);
+      });
+    });
+
+    return Array.from(countMap.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 4); // Pega os top 4
+  });
 
   constructor() {
     document.documentElement.classList.remove('dark');
