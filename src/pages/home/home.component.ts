@@ -71,27 +71,14 @@ import { FormsModule } from '@angular/forms';
         @if (isMobileMenuOpen()) {
           <div class="md:hidden absolute top-full left-0 right-0 bg-white border-b border-primary/10 shadow-xl animate-[slideIn_0.2s_ease-out]">
             <nav class="flex flex-col p-4 gap-2">
-              @if (deferredPrompt) {
-                <button (click)="installPwa()" class="w-full p-3 mb-2 rounded-xl bg-green-50 text-green-700 font-bold text-center border border-green-200 flex items-center justify-center gap-2 shadow-sm">
-                   <span class="material-symbols-outlined">download</span> Instalar Aplicativo
-                </button>
-              }
-
               <button (click)="enableNotifications(); toggleMobileMenu()" class="w-full p-3 mb-2 rounded-xl bg-blue-50 text-blue-700 font-bold text-center border border-blue-200 flex items-center justify-center gap-2 shadow-sm">
                   <span class="material-symbols-outlined">notifications_active</span> Ativar Notificações
               </button>
               
-              @if (auth.currentUser()) {
-                <button (click)="songService.downloadBackup(); toggleMobileMenu()" class="w-full p-3 mb-2 rounded-xl bg-gray-100 text-gray-700 font-bold text-center border border-gray-200 flex items-center justify-center gap-2 shadow-sm">
-                  <span class="material-symbols-outlined">save</span> Fazer Backup dos Dados
-                </button>
-              }
-
               <a routerLink="/" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-primary font-bold transition-colors">Início</a>
               <a routerLink="/services" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-gray-600 hover:text-primary transition-colors">Cultos</a>
               <a routerLink="/repertoire" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-gray-600 hover:text-primary transition-colors">Repertório</a>
               <a routerLink="/stats" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-orange-50 text-gray-600 hover:text-orange-500 transition-colors flex items-center gap-2"><span class="material-symbols-outlined">equalizer</span> Estatísticas</a>
-              <a routerLink="/about" (click)="toggleMobileMenu()" class="p-3 rounded-xl hover:bg-gray-50 text-gray-600 hover:text-primary transition-colors">Sobre Nós</a>
               
               <div class="h-px bg-gray-100 my-1"></div>
               
@@ -373,16 +360,23 @@ import { FormsModule } from '@angular/forms';
                   
                   <div class="space-y-2 mb-6">
                     @for (culto of data.upcoming; track culto.id) {
-                      <div [routerLink]="['/services', culto.id]" (click)="closeMemberDetails()" class="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100 cursor-pointer hover:bg-green-100 transition-colors relative group">
-                        <div class="flex flex-col items-center justify-center h-10 w-10 bg-white rounded-lg border border-green-100 shadow-sm text-green-700">
-                          <span class="text-[10px] font-bold uppercase">{{ formatDateMonth(culto.date) }}</span>
-                          <span class="text-lg font-black leading-none">{{ formatDateDay(culto.date) }}</span>
+                      <div [routerLink]="['/services', culto.id]" (click)="closeMemberDetails()" class="flex items-center justify-between gap-3 p-3 rounded-xl bg-green-50 border border-green-100 cursor-pointer hover:bg-green-100 transition-colors relative group">
+                        
+                        <div class="flex items-center gap-3 flex-1">
+                          <div class="flex flex-col items-center justify-center h-10 w-10 bg-white rounded-lg border border-green-100 shadow-sm text-green-700">
+                            <span class="text-[10px] font-bold uppercase">{{ formatDateMonth(culto.date) }}</span>
+                            <span class="text-lg font-black leading-none">{{ formatDateDay(culto.date) }}</span>
+                          </div>
+                          <div>
+                            <div class="font-bold text-gray-800 text-sm">{{ culto.title }}</div>
+                            <div class="text-xs text-gray-500">{{ getWeekDay(culto.date) }}</div>
+                          </div>
                         </div>
-                        <div>
-                          <div class="font-bold text-gray-800 text-sm">{{ culto.title }}</div>
-                          <div class="text-xs text-gray-500">{{ getWeekDay(culto.date) }}</div>
-                        </div>
-                        <span class="material-symbols-outlined text-green-300 absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+
+                        <button (click)="$event.stopPropagation(); shareSingleService(data.name, culto)" class="h-8 w-8 flex items-center justify-center rounded-full bg-green-200 text-green-700 hover:bg-green-300 hover:text-green-800 transition-colors z-10" title="Enviar este culto no WhatsApp">
+                          <span class="material-symbols-outlined text-lg">share</span>
+                        </button>
+
                       </div>
                     } @empty {
                       <p class="text-sm text-gray-400 italic text-center py-2">Nenhuma escala futura agendada.</p>
@@ -390,7 +384,7 @@ import { FormsModule } from '@angular/forms';
                   </div>
 
                   <button (click)="shareMemberSchedule()" class="w-full py-3 bg-[#25D366] hover:bg-[#128C7E] text-white font-bold rounded-xl shadow-lg shadow-green-900/10 transition-all active:scale-95 flex items-center justify-center gap-2 mb-6">
-                    <span class="material-symbols-outlined">share</span> Enviar Escala no WhatsApp
+                    <span class="material-symbols-outlined">share</span> Enviar Todas as Escalas
                   </button>
 
                   <details class="group">
@@ -432,7 +426,6 @@ export class HomeComponent implements OnInit {
   isEditingNotice = signal(false);
   tempNotice = '';
 
-  // 🟢 ESTADO DO MODAL DE MEMBRO
   selectedMemberDetails = signal<{
     name: string;
     upcoming: Culto[];
@@ -468,61 +461,48 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  // --- Lógica do Modal de Membro ---
   viewMemberDetails(member: { name: string, count: number }) {
-    console.log('Clicou no membro:', member); // DEBUG
     const allCultos = this.songService.cultos();
     const memberCultos = allCultos.filter(c => c.vocals?.includes(member.name));
-    
     memberCultos.sort((a, b) => b.date.localeCompare(a.date));
-
     const today = new Date().toISOString().split('T')[0];
     const upcoming = memberCultos.filter(c => c.date >= today).reverse();
     const past = memberCultos.filter(c => c.date < today);
-
-    this.selectedMemberDetails.set({
-      name: member.name,
-      upcoming,
-      past
-    });
+    this.selectedMemberDetails.set({ name: member.name, upcoming, past });
   }
 
-  closeMemberDetails() {
-    this.selectedMemberDetails.set(null);
-  }
+  closeMemberDetails() { this.selectedMemberDetails.set(null); }
 
-  // 👇 CORREÇÃO: API WHATSAPP + LINK DIRETO DO CULTO
+  // 1. Compartilhar TUDO (Atacadão)
   shareMemberSchedule() {
     const data = this.selectedMemberDetails();
     if (!data) return;
-
-    // Pega o endereço base do site (ex: https://louvores-gpv.web.app)
     const baseUrl = window.location.href.split('#')[0];
-
     let text = `Olá *${data.name}*! 👋\n\nConfira suas *Próximas Escalas* na PIB Croatá:\n\n`;
 
-    if (data.upcoming.length === 0) {
-      text += `_Nenhuma escala agendada por enquanto._\n`;
-    } else {
+    if (data.upcoming.length === 0) { text += `_Nenhuma escala agendada por enquanto._\n`; } 
+    else {
       data.upcoming.forEach(c => {
         const date = this.formatDate(c.date);
-        
-        // Monta o link para este culto específico
         const link = `${baseUrl}#/services/${c.id}`;
-
-        text += `🗓️ *${date}* - ${c.title}\n`;
-        text += `🔗 ${link}\n\n`;
+        text += `🗓️ *${date}* - ${c.title}\n🔗 ${link}\n\n`;
       });
     }
-
     text += `_Gerado pelo App Louvores PIB_`;
-    
-    // Mudança para api.whatsapp.com para corrigir encoding de emojis
-    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
   }
 
-  // Helpers de Data para o Modal
+  // 2. Compartilhar UM CULTO SÓ (Varejo) - NOVO!
+  shareSingleService(name: string, culto: Culto) {
+    const baseUrl = window.location.href.split('#')[0];
+    const date = this.formatDate(culto.date);
+    const link = `${baseUrl}#/services/${culto.id}`;
+
+    const text = `Olá *${name}*! 👋\n\nPassando para lembrar da sua escala:\n\n🗓️ *${date}* - ${culto.title}\n🔗 ${link}\n\nDeus abençoe! 🙏`;
+    
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+  }
+
   formatDate(dateStr: string) { const [y, m, d] = dateStr.split('-'); return `${d}/${m}/${y}`; }
   formatDateDay(dateStr: string) { return dateStr.split('-')[2]; }
   formatDateMonth(dateStr: string) { 
@@ -531,19 +511,14 @@ export class HomeComponent implements OnInit {
   }
   getWeekDay(dateStr: string) {
     const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-    // Gambiarra do fuso horário para garantir o dia certo
     return days[new Date(dateStr + 'T12:00:00').getDay()];
   }
 
-  // --- Outras Funções ---
   handleImageError(event: any) {
     const imgElement = event.target;
     imgElement.style.display = 'none';
     const fallbackDiv = imgElement.nextElementSibling;
-    if (fallbackDiv) {
-      fallbackDiv.classList.remove('hidden');
-      fallbackDiv.classList.add('flex');
-    }
+    if (fallbackDiv) { fallbackDiv.classList.remove('hidden'); fallbackDiv.classList.add('flex'); }
   }
 
   installPwa() {
