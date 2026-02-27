@@ -445,8 +445,7 @@ export class HomeComponent implements OnInit {
     });
     return Array.from(countMap.entries())
       .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 4);
+      .sort((a, b) => b.count - a.count);
   });
 
   constructor() {
