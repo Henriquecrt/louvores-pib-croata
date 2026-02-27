@@ -5,6 +5,7 @@ import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
 import { SongService, Song, Culto } from '../../services/song.service';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-home',
@@ -185,9 +186,10 @@ import { FormsModule } from '@angular/forms';
                       <button (click)="generateSuggestion()" class="flex-1 py-2 rounded-lg bg-gray-100 text-gray-600 font-bold text-xs hover:bg-gray-200 transition-colors flex items-center justify-center gap-1">
                         <span class="material-symbols-outlined text-base">refresh</span> Outra
                       </button>
-                      <a routerLink="/repertoire" class="flex-1 py-2 rounded-lg bg-green-600 text-white font-bold text-xs hover:bg-green-700 transition-colors shadow-lg shadow-green-200 flex items-center justify-center gap-1">
-                        Ver Letra <span class="material-symbols-outlined text-base">arrow_forward</span>
-                      </a>
+                      
+                      <button (click)="viewSuggestedSong()" class="flex-1 py-2 rounded-lg bg-green-600 text-white font-bold text-xs hover:bg-green-700 transition-colors shadow-lg shadow-green-200 flex items-center justify-center gap-1">
+                        Ver Letra <span class="material-symbols-outlined text-base">visibility</span>
+                      </button>
                     </div>
                   </div>
                 }
@@ -218,7 +220,7 @@ import { FormsModule } from '@angular/forms';
 
                 <h3 class="text-lg font-bold text-gray-800 mb-6 flex items-center justify-center gap-2 relative z-10">
                   <span class="material-symbols-outlined text-orange-500 text-2xl animate-pulse">trophy</span> 
-                  <span class="bg-gradient-to-r from-orange-600 to-orange-400 bg-clip-text text-transparent">Destaques da Equipe</span>
+                  <span class="bg-gradient-to-r from-orange-600 to-orange-400 bg-clip-text text-transparent">Nossa Equipe de Louvor</span>
                 </h3>
                 
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
@@ -245,7 +247,7 @@ import { FormsModule } from '@angular/forms';
                     </button>
                   } @empty {
                     <div class="col-span-full text-gray-400 text-sm py-4 italic">
-                      Comece a criar escalas para ver o ranking aqui!
+                      Comece a criar escalas para ver a equipe aqui!
                     </div>
                   }
                 </div>
@@ -410,6 +412,45 @@ import { FormsModule } from '@angular/forms';
         </div>
       }
 
+      @if (selectedSuggestedSong(); as song) {
+        <div class="fixed inset-0 z-[100] overflow-y-auto" role="dialog" aria-modal="true">
+          <div class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" (click)="closeSuggestedSong()"></div>
+          
+          <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 w-full max-w-2xl animate-[scaleIn_0.2s_ease-out] flex flex-col max-h-[90vh]">
+              
+              <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-gray-50">
+                <div class="flex flex-col">
+                  <h2 class="text-2xl font-bold text-gray-900 leading-tight">{{ song.title }}</h2>
+                  <span class="text-primary font-medium flex items-center gap-1 mt-1">
+                    <span class="material-symbols-outlined text-[18px]">mic</span> {{ song.artist }}
+                  </span>
+                </div>
+                <button (click)="closeSuggestedSong()" class="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-full hover:bg-gray-200">
+                  <span class="material-symbols-outlined text-2xl">close</span>
+                </button>
+              </div>
+
+              <div class="flex-1 overflow-y-auto p-6 md:p-8 bg-white">
+                @if (song.youtubeUrl) {
+                    <div class="mb-6 aspect-video w-full rounded-xl overflow-hidden shadow-lg bg-black">
+                      <iframe class="w-full h-full" [src]="getSafeUrl(song.youtubeUrl)" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                    </div>
+                }
+                <pre class="whitespace-pre-wrap font-sans text-lg md:text-xl text-gray-700 leading-relaxed text-center">{{ song.lyrics }}</pre>
+              </div>
+
+              <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-end">
+                <button (click)="closeSuggestedSong()" class="py-2 px-6 bg-gray-200 text-gray-800 rounded-xl font-bold hover:bg-gray-300 transition-colors">
+                  Fechar Letra
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      }
+
     </div>
   `
 })
@@ -419,10 +460,17 @@ export class HomeComponent implements OnInit {
   notificationService = inject(NotificationService);
   songService = inject(SongService); 
   
+  // 🚨 Injeção do DomSanitizer para o link do YouTube da Sugestão funcionar
+  private sanitizer = inject(DomSanitizer);
+  
   isMobileMenuOpen = signal(false);
   deferredPrompt: any = null;
 
   suggestionState = signal<{song: Song | null, reason: string}>({ song: null, reason: '' });
+  
+  // 🚨 Sinal para controlar o Modal da Letra Sugerida
+  selectedSuggestedSong = signal<Song | null>(null);
+
   isEditingNotice = signal(false);
   tempNotice = '';
 
@@ -472,7 +520,6 @@ export class HomeComponent implements OnInit {
 
   closeMemberDetails() { this.selectedMemberDetails.set(null); }
 
-  // 1. Compartilhar TUDO (Atacadão)
   shareMemberSchedule() {
     const data = this.selectedMemberDetails();
     if (!data) return;
@@ -491,7 +538,6 @@ export class HomeComponent implements OnInit {
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
   }
 
-  // 2. Compartilhar UM CULTO SÓ (Varejo) - NOVO!
   shareSingleService(name: string, culto: Culto) {
     const baseUrl = window.location.href.split('#')[0];
     const date = this.formatDate(culto.date);
@@ -571,6 +617,28 @@ export class HomeComponent implements OnInit {
     const lastDate = lastDates.get(winner.id);
     let reason = !lastDate ? 'Nunca foi tocada.' : `Não é tocada há ${Math.ceil(Math.abs(today.getTime() - lastDate.getTime()) / (1000 * 3600 * 24))} dias.`;
     this.suggestionState.set({ song: winner, reason });
+  }
+
+  // 🚨 Funções para o Modal da Sugestão
+  viewSuggestedSong() {
+    if (this.suggestionState().song) {
+      this.selectedSuggestedSong.set(this.suggestionState().song);
+    }
+  }
+
+  closeSuggestedSong() {
+    this.selectedSuggestedSong.set(null);
+  }
+
+  getSafeUrl(url: string | undefined): SafeResourceUrl | null {
+    if (!url) return null;
+    let videoId = '';
+    if (url.includes('v=')) { videoId = url.split('v=')[1].split('&')[0]; } 
+    else if (url.includes('youtu.be/')) { videoId = url.split('youtu.be/')[1].split('?')[0]; }
+    else if (url.includes('youtube.com/')) { return this.sanitizer.bypassSecurityTrustResourceUrl(url); }
+    else { return this.sanitizer.bypassSecurityTrustResourceUrl(url); }
+    const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
   }
 
   startEditNotice() { this.tempNotice = this.songService.noticeMessage(); this.isEditingNotice.set(true); }
