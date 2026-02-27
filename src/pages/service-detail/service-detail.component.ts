@@ -315,14 +315,22 @@ export class ServiceDetailComponent {
 
   culto = computed(() => this.songService.cultos().find(c => c.id === this.cultoId()));
 
+  // 🛡️ VACINA APLICADA AQUI: Mistura formato velho e novo sem perder ninguém
   songsInCulto = computed(() => { 
     const currentCulto = this.culto(); 
     if (!currentCulto) return []; 
-    const items = currentCulto.items || currentCulto.songIds.map(id => ({ songId: id, key: '' }));
-    return items.map(item => {
-      const song = this.songService.songs().find(s => s.id === item.songId);
+    
+    // Pega a lista original de IDs (que nunca apaga)
+    const ids = currentCulto.songIds || [];
+    // Cria um dicionário com os tons do formato novo
+    const itemsMap = new Map((currentCulto.items || []).map(i => [i.songId, i.key]));
+
+    return ids.map(id => {
+      const song = this.songService.songs().find(s => s.id === id);
       if (!song) return null;
-      const displayKey = item.key || song.key;
+      
+      // Se tem no formato novo, pega o tom dele. Se não, pega o tom padrão.
+      const displayKey = itemsMap.get(id) || song.key;
       return { song, displayKey };
     }).filter((item): item is { song: Song, displayKey: string | undefined } => !!item);
   });
@@ -341,21 +349,16 @@ export class ServiceDetailComponent {
     return item?.displayKey;
   }
 
-  // --- NOVA LÓGICA DE NAVEGAÇÃO 🎠 ---
-  
-  // Verifica se é a primeira música (para desativar botão voltar)
   isFirstSong(songId: string): boolean {
     const list = this.songsInCulto();
     return list.length > 0 && list[0].song.id === songId;
   }
 
-  // Verifica se é a última música (para desativar botão próxima)
   isLastSong(songId: string): boolean {
     const list = this.songsInCulto();
     return list.length > 0 && list[list.length - 1].song.id === songId;
   }
 
-  // Função que troca a música
   navigateSong(direction: number) {
     const list = this.songsInCulto();
     const currentId = this.selectedSong()?.id;
@@ -365,13 +368,10 @@ export class ServiceDetailComponent {
     if (currentIndex === -1) return;
 
     const newIndex = currentIndex + direction;
-
-    // Proteção para não sair da lista
     if (newIndex >= 0 && newIndex < list.length) {
       this.selectedSong.set(list[newIndex].song);
     }
   }
-  // -----------------------------------
 
   addSong(song: Song) { 
     this.songService.addSongToCulto(this.cultoId(), song.id, song.key || ''); 
@@ -393,15 +393,23 @@ export class ServiceDetailComponent {
     }
   }
   
+  // 🛡️ SEGUNDA VACINA AQUI: Reorganiza sem perder o formato ao mover músicas
   async moveSong(index: number, direction: number) {
     const c = this.culto();
     if (!c || !c.songIds) return;
+
     const newIds = [...c.songIds];
-    const newItems = c.items ? [...c.items] : newIds.map(id => ({ songId: id, key: '' })); 
+    
+    // Reconstrói a lista de tons com segurança
+    const currentItemsMap = new Map((c.items || []).map(i => [i.songId, i.key]));
+    const newItems = newIds.map(id => ({ songId: id, key: currentItemsMap.get(id) || '' })); 
+
     const newIndex = index + direction;
     if (newIndex < 0 || newIndex >= newIds.length) return;
+
     [newIds[index], newIds[newIndex]] = [newIds[newIndex], newIds[index]];
     [newItems[index], newItems[newIndex]] = [newItems[newIndex], newItems[index]];
+
     await this.songService.updateCulto(c.id, { songIds: newIds, items: newItems });
   }
 
@@ -437,21 +445,25 @@ export class ServiceDetailComponent {
   closeModal() { this.isModalOpen.set(false); this.editingSong.set(null); }
   onSaveSong(songData: any) { const currentSong = this.editingSong(); if (currentSong) { this.songService.updateSong(currentSong.id, songData); } this.closeModal(); }
 
+  // 🛡️ TERCEIRA VACINA: Atualizado para api.whatsapp.com para corrigir emojis
   shareOnWhatsApp() {
     const currentCulto = this.culto();
     const songs = this.songsInCulto(); 
     if (!currentCulto) return;
+    
     let text = `*CULTO - ${this.formatDate(currentCulto.date)}*\n`;
     if (currentCulto.vocals && currentCulto.vocals.length > 0) { text += `\n*🎤 EQUIPE DE VOCAL:*\n${currentCulto.vocals.join(', ')}\n`; }
     text += `\n*LISTA DE LOUVORES:*\n\n`;
+    
     songs.forEach((item, index) => {
       const key = item.displayKey ? `(${item.displayKey})` : '';
       text += `*${index + 1}. ${item.song.title}* ${key}\n`;
       if (item.song.youtubeUrl) { text += `>> ${item.song.youtubeUrl}\n`; }
       text += `\n`;
     });
+    
     text += `______________________________\n*Acompanhe a cifra e a letra aqui:*\n${window.location.href}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
   }
 
   getSafeUrl(url: string | undefined): SafeResourceUrl | null {
