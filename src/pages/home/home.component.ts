@@ -154,7 +154,38 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
               Bem-vindo à Primeira Igreja Batista em Croatá. Acompanhe nossas escalas, aprenda os louvores e participe dos nossos cultos.
             </p>
 
-            @if (auth.currentUser()) {
+            @if (cultoDeHoje(); as hoje) {
+              <div class="w-full max-w-lg mx-auto my-2 animate-[scaleIn_0.4s_ease-out]">
+                <a [routerLink]="['/services', hoje.id]" class="block relative overflow-hidden rounded-2xl bg-gray-900 text-white shadow-2xl transition-all duration-300 hover:scale-[1.02] hover:shadow-red-900/30 border border-gray-800 group text-left">
+                  
+                  <div class="absolute -right-10 -top-10 w-40 h-40 bg-red-600 rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                  
+                  <div class="p-6 relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                      <div class="flex items-center gap-2">
+                        <span class="relative flex h-3 w-3">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                        </span>
+                        <span class="text-red-500 font-bold text-xs uppercase tracking-widest">Acontecendo Hoje</span>
+                      </div>
+                      <span class="material-symbols-outlined text-gray-500 group-hover:text-white transition-colors">arrow_forward</span>
+                    </div>
+                    
+                    <h3 class="text-2xl sm:text-3xl font-black text-white mb-1 leading-tight truncate">{{ hoje.title }}</h3>
+                    <p class="text-gray-400 text-sm mb-5">
+                      <span class="font-bold text-gray-300">{{ hoje.songIds.length }} músicas</span> programadas
+                    </p>
+                    
+                    <button class="w-full py-3.5 rounded-xl bg-red-600 text-white font-bold text-sm shadow-lg shadow-red-900/50 group-hover:bg-red-500 transition-colors flex items-center justify-center gap-2">
+                      <span class="material-symbols-outlined text-xl">login</span> Acessar Letras do Culto
+                    </button>
+                  </div>
+                </a>
+              </div>
+            }
+
+            @if (!cultoDeHoje() && auth.currentUser()) {
               <div class="w-full max-w-sm mx-auto my-2 animate-[fadeIn_0.5s_ease-out]">
                 @if (!suggestionState().song) {
                   <button (click)="generateSuggestion()" class="w-full group relative flex flex-col items-center justify-center gap-1 overflow-hidden rounded-xl bg-gradient-to-br from-green-600 to-emerald-600 p-4 text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl active:scale-95">
@@ -459,16 +490,12 @@ export class HomeComponent implements OnInit {
   router = inject(Router);
   notificationService = inject(NotificationService);
   songService = inject(SongService); 
-  
-  // 🚨 Injeção do DomSanitizer para o link do YouTube da Sugestão funcionar
   private sanitizer = inject(DomSanitizer);
   
   isMobileMenuOpen = signal(false);
   deferredPrompt: any = null;
 
   suggestionState = signal<{song: Song | null, reason: string}>({ song: null, reason: '' });
-  
-  // 🚨 Sinal para controlar o Modal da Letra Sugerida
   selectedSuggestedSong = signal<Song | null>(null);
 
   isEditingNotice = signal(false);
@@ -482,6 +509,12 @@ export class HomeComponent implements OnInit {
 
   isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
   isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+
+  cultoDeHoje = computed(() => {
+    const d = new Date();
+    const today = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    return this.songService.cultos().find(c => c.date === today);
+  });
 
   topMembers = computed(() => {
     const cultos = this.songService.cultos();
@@ -619,7 +652,6 @@ export class HomeComponent implements OnInit {
     this.suggestionState.set({ song: winner, reason });
   }
 
-  // 🚨 Funções para o Modal da Sugestão
   viewSuggestedSong() {
     if (this.suggestionState().song) {
       this.selectedSuggestedSong.set(this.suggestionState().song);
