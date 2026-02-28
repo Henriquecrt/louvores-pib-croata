@@ -3,12 +3,19 @@ module.exports = {
   content: [
     "./src/**/*.{html,ts}",
   ],
-  darkMode: 'class', 
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
-        primary: '#16a34a',
-        'primary-hover': '#15803d',
+        "primary": "#008000",
+        "primary-hover": "#006400",
+        "background-light": "#F0FFF0",
+        "background-dark": "#0A1A0A",
+        "text-main": "#1F2937",
+      },
+      fontFamily: {
+        "display": ["Manrope", "sans-serif"],
+        "body": ["Poppins", "sans-serif"],
       }
     },
   },
