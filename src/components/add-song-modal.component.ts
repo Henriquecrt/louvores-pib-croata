@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Song, SongService } from '../services/song.service';
@@ -143,6 +143,9 @@ export class AddSongModalComponent implements OnChanges {
   @Output() save = new EventEmitter<any>();
 
   private songService = inject(SongService);
+  
+  // 🚨 Injetamos o ChangeDetectorRef para avisar a tela quando carregar ou parar
+  private cdr = inject(ChangeDetectorRef);
 
   formData = {
     title: '',
@@ -196,21 +199,42 @@ export class AddSongModalComponent implements OnChanges {
     if (!this.scraperUrl) return;
     
     this.isScraping = true;
+    this.cdr.markForCheck(); // 🚨 Avisa a tela para girar o botão
+    
     const urlToScrape = this.scraperUrl.trim();
+    let htmlString = '';
 
     try {
-      // Plano A: Usamos o CodeTabs que tem menos bloqueios de CORS
-      let response = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(urlToScrape)}`);
-      
-      // Plano B: Se o primeiro falhar, tentamos o CorsProxy
-      if (!response.ok) {
-         response = await fetch(`https://corsproxy.io/?${encodeURIComponent(urlToScrape)}`);
+      // 🟢 PLANO A: AllOrigins (Retorna JSON com HTML embutido, ótimo para burlar CORS)
+      try {
+        const res1 = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(urlToScrape)}`);
+        if (res1.ok) {
+           const data = await res1.json();
+           htmlString = data.contents;
+        } else {
+           throw new Error('AllOrigins falhou');
+        }
+      } catch (err1) {
+        // 🟡 PLANO B: CodeTabs Proxy
+        try {
+          const res2 = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(urlToScrape)}`);
+          if (res2.ok) {
+             htmlString = await res2.text();
+          } else {
+             throw new Error('CodeTabs falhou');
+          }
+        } catch (err2) {
+           // 🔴 PLANO C: CorsProxy
+           const res3 = await fetch(`https://corsproxy.io/?${encodeURIComponent(urlToScrape)}`);
+           if (res3.ok) {
+              htmlString = await res3.text();
+           } else {
+              throw new Error('Todos os proxies falharam');
+           }
+        }
       }
-      
-      if (!response.ok) throw new Error('Falha ao conectar no site');
-      
-      // Lemos a resposta como texto bruto
-      const htmlString = await response.text();
+
+      if (!htmlString) throw new Error('HTML vazio retornado');
 
       // Cria um DOM virtual para ler o HTML como se fosse uma página
       const parser = new DOMParser();
@@ -229,14 +253,12 @@ export class AddSongModalComponent implements OnChanges {
         if (titleEl) title = titleEl.textContent || '';
         if (artistEl) artist = artistEl.textContent || '';
         if (lyricsEl) {
-          // Remove os span de acordes mantendo a estrutura limpa
           lyricsEl.querySelectorAll('b').forEach(b => b.remove()); 
           lyrics = lyricsEl.innerHTML.replace(/<br\s*[\/]?>/gi, '\n').replace(/<[^>]*>?/gm, '').trim();
         }
       } 
       // Tenta extrair Padrão LETRAS.MUS
       else if (urlToScrape.includes('letras.mus.br')) {
-        // Deixamos a busca mais genérica para não falhar se eles mudarem as classes
         const titleEl = doc.querySelector('h1.textTitle-subject') || doc.querySelector('h1');
         const artistEl = doc.querySelector('h2.textTitle-signature a') || doc.querySelector('h2 a') || doc.querySelector('h2');
         const lyricsContainers = doc.querySelectorAll('.lyric-original p, .lyric p');
@@ -252,7 +274,6 @@ export class AddSongModalComponent implements OnChanges {
         }
       } else {
         alert('Site não suportado. Tente link do CifraClub ou Letras.mus.br');
-        this.isScraping = false;
         return;
       }
 
@@ -261,16 +282,17 @@ export class AddSongModalComponent implements OnChanges {
         this.formData.title = title.trim();
         this.formData.artist = artist.trim();
         this.formData.lyrics = lyrics;
-        this.scraperUrl = ''; // Limpa o campo após sucesso
+        this.scraperUrl = ''; 
       } else {
-        alert('Não foi possível encontrar a letra na página. O site de origem pode ter mudado de layout.');
+        alert('Não foi possível encontrar a letra na página. O site pode estar bloqueando a requisição.');
       }
 
     } catch (error) {
       console.error(error);
-      alert('Erro na extração. O servidor proxy pode estar bloqueado temporariamente.');
+      alert('Erro de conexão. Os servidores de atalho podem estar bloqueados ou a internet falhou.');
     } finally {
       this.isScraping = false;
+      this.cdr.markForCheck(); // 🚨 Avisa a tela para parar de girar o botão
     }
   }
 
@@ -280,6 +302,7 @@ export class AddSongModalComponent implements OnChanges {
 
     this.isImporting = true;
     this.importStatus = 'Lendo arquivo CSV...';
+    this.cdr.markForCheck();
 
     const reader = new FileReader();
     reader.readAsText(file, 'UTF-8');
@@ -315,6 +338,7 @@ export class AddSongModalComponent implements OnChanges {
 
                 if (existingSong) {
                     this.importStatus = `Atualizando: ${title}`;
+                    this.cdr.markForCheck();
                     await this.songService.updateSong(existingSong.id, {
                         title: title, 
                         artist: artist || existingSong.artist,
@@ -323,6 +347,7 @@ export class AddSongModalComponent implements OnChanges {
                     updated++;
                 } else {
                     this.importStatus = `Adicionando: ${title}`;
+                    this.cdr.markForCheck();
                     await this.songService.addSong({
                         title: title,
                         artist: artist || 'Desconhecido',
@@ -340,6 +365,8 @@ export class AddSongModalComponent implements OnChanges {
       }
 
       this.importStatus = 'Concluído!';
+      this.cdr.markForCheck();
+      
       setTimeout(() => {
         this.closeModal();
         alert(`Relatório da Importação:\n\n✅ ${added} novas músicas adicionadas.\n🔄 ${updated} músicas antigas atualizadas.\n\nTotal processado com sucesso!`);
