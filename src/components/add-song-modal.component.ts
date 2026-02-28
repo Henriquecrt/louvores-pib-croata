@@ -143,8 +143,6 @@ export class AddSongModalComponent implements OnChanges {
   @Output() save = new EventEmitter<any>();
 
   private songService = inject(SongService);
-  
-  // 🚨 Injetamos o ChangeDetectorRef para avisar a tela quando carregar ou parar
   private cdr = inject(ChangeDetectorRef);
 
   formData = {
@@ -199,13 +197,12 @@ export class AddSongModalComponent implements OnChanges {
     if (!this.scraperUrl) return;
     
     this.isScraping = true;
-    this.cdr.markForCheck(); // 🚨 Avisa a tela para girar o botão
+    this.cdr.markForCheck(); 
     
     const urlToScrape = this.scraperUrl.trim();
     let htmlString = '';
 
     try {
-      // 🟢 PLANO A: AllOrigins (Retorna JSON com HTML embutido, ótimo para burlar CORS)
       try {
         const res1 = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(urlToScrape)}`);
         if (res1.ok) {
@@ -215,7 +212,6 @@ export class AddSongModalComponent implements OnChanges {
            throw new Error('AllOrigins falhou');
         }
       } catch (err1) {
-        // 🟡 PLANO B: CodeTabs Proxy
         try {
           const res2 = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(urlToScrape)}`);
           if (res2.ok) {
@@ -224,7 +220,6 @@ export class AddSongModalComponent implements OnChanges {
              throw new Error('CodeTabs falhou');
           }
         } catch (err2) {
-           // 🔴 PLANO C: CorsProxy
            const res3 = await fetch(`https://corsproxy.io/?${encodeURIComponent(urlToScrape)}`);
            if (res3.ok) {
               htmlString = await res3.text();
@@ -236,7 +231,6 @@ export class AddSongModalComponent implements OnChanges {
 
       if (!htmlString) throw new Error('HTML vazio retornado');
 
-      // Cria um DOM virtual para ler o HTML como se fosse uma página
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlString, 'text/html');
 
@@ -259,12 +253,26 @@ export class AddSongModalComponent implements OnChanges {
       } 
       // Tenta extrair Padrão LETRAS.MUS
       else if (urlToScrape.includes('letras.mus.br')) {
-        const titleEl = doc.querySelector('h1.textTitle-subject') || doc.querySelector('h1');
-        const artistEl = doc.querySelector('h2.textTitle-signature a') || doc.querySelector('h2 a') || doc.querySelector('h2');
+        const titleEl = doc.querySelector('.textTitle-subject') || doc.querySelector('.head-title');
+        const artistEl = doc.querySelector('.textTitle-signature') || doc.querySelector('.head-subtitle');
         const lyricsContainers = doc.querySelectorAll('.lyric-original p, .lyric p');
 
         if (titleEl) title = titleEl.textContent || '';
         if (artistEl) artist = artistEl.textContent || '';
+
+        // 🛡️ VACINA ANTI-ERRO: Busca pela tag <title> da aba do navegador!
+        if (!artist || artist.toUpperCase().includes('LETRAS.MUS.BR')) {
+           const pageTitle = doc.querySelector('title')?.textContent || '';
+           // A aba do Letras sempre é "Musica - Cantor - LETRAS.MUS.BR"
+           const titleParts = pageTitle.split(' - ');
+           if (titleParts.length >= 2) {
+               if (!title || title.toUpperCase().includes('LETRAS')) {
+                   title = titleParts[0].trim();
+               }
+               artist = titleParts[1].trim();
+           }
+        }
+
         if (lyricsContainers.length > 0) {
            let extractedText = '';
            lyricsContainers.forEach(p => {
@@ -277,10 +285,9 @@ export class AddSongModalComponent implements OnChanges {
         return;
       }
 
-      // Preenche o formulário se encontrou algo
       if (title || lyrics) {
-        this.formData.title = title.trim();
-        this.formData.artist = artist.trim();
+        this.formData.title = title.replace(/\n/g, '').trim();
+        this.formData.artist = artist.replace(/\n/g, '').trim();
         this.formData.lyrics = lyrics;
         this.scraperUrl = ''; 
       } else {
@@ -292,7 +299,7 @@ export class AddSongModalComponent implements OnChanges {
       alert('Erro de conexão. Os servidores de atalho podem estar bloqueados ou a internet falhou.');
     } finally {
       this.isScraping = false;
-      this.cdr.markForCheck(); // 🚨 Avisa a tela para parar de girar o botão
+      this.cdr.markForCheck(); 
     }
   }
 
