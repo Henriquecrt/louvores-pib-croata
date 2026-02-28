@@ -4,15 +4,18 @@ import { SwUpdate, VersionReadyEvent } from '@angular/service-worker'; // <--- I
 import { filter } from 'rxjs';
 import { ToastComponent } from './components/toast.component'; 
 import { NotificationService } from './services/notification.service'; 
+import { InstallPromptComponent } from './components/install-prompt.component'; // <--- Nosso novo componente importado
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, ToastComponent],
+  imports: [RouterOutlet, ToastComponent, InstallPromptComponent], // <--- Adicionado aos imports
   template: `
     <app-toast></app-toast> 
     
     <router-outlet></router-outlet>
+
+    <app-install-prompt></app-install-prompt>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
