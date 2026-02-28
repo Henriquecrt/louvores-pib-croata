@@ -32,7 +32,7 @@ import { Song, SongService } from '../services/song.service';
                        Importação Rápida
                     </label>
                     <div class="flex gap-2">
-                      <input [(ngModel)]="scraperUrl" type="text" placeholder="Cole o link do CifraClub aqui..." 
+                      <input [(ngModel)]="scraperUrl" type="text" placeholder="Cole o link do CifraClub ou Letras aqui..." 
                              class="flex-1 rounded-lg bg-white dark:bg-black/30 border border-purple-200 dark:border-purple-800/50 px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-400 outline-none transition-all">
                       <button (click)="extractFromUrl()" [disabled]="isScraping || !scraperUrl" 
                               class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all disabled:opacity-50 flex items-center gap-1 shadow-sm">
@@ -156,7 +156,6 @@ export class AddSongModalComponent implements OnChanges {
   isImporting = false;
   importStatus = '';
   
-  // Variáveis do Extrator Mágico
   scraperUrl = '';
   isScraping = false;
 
@@ -192,7 +191,7 @@ export class AddSongModalComponent implements OnChanges {
     return `https://www.letras.mus.br/?q=${query}`;
   }
 
-  // --- ⚡ LÓGICA DO EXTRATOR MÁGICO VIA ALLORIGINS ⚡ ---
+  // --- ⚡ LÓGICA DO EXTRATOR MÁGICO ⚡ ---
   async extractFromUrl() {
     if (!this.scraperUrl) return;
     
@@ -200,15 +199,20 @@ export class AddSongModalComponent implements OnChanges {
     const urlToScrape = this.scraperUrl.trim();
 
     try {
-      // Usamos um Proxy gratuito para burlar o bloqueio de CORS do navegador
-      const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(urlToScrape)}`);
+      // Plano A: Usamos o CodeTabs que tem menos bloqueios de CORS
+      let response = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(urlToScrape)}`);
+      
+      // Plano B: Se o primeiro falhar, tentamos o CorsProxy
+      if (!response.ok) {
+         response = await fetch(`https://corsproxy.io/?${encodeURIComponent(urlToScrape)}`);
+      }
       
       if (!response.ok) throw new Error('Falha ao conectar no site');
       
-      const data = await response.json();
-      const htmlString = data.contents;
+      // Lemos a resposta como texto bruto
+      const htmlString = await response.text();
 
-      // Cria um DOM virtual para ler o HTML
+      // Cria um DOM virtual para ler o HTML como se fosse uma página
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlString, 'text/html');
 
@@ -225,16 +229,17 @@ export class AddSongModalComponent implements OnChanges {
         if (titleEl) title = titleEl.textContent || '';
         if (artistEl) artist = artistEl.textContent || '';
         if (lyricsEl) {
-          // Remove os span de acordes mantendo a estrutura
+          // Remove os span de acordes mantendo a estrutura limpa
           lyricsEl.querySelectorAll('b').forEach(b => b.remove()); 
           lyrics = lyricsEl.innerHTML.replace(/<br\s*[\/]?>/gi, '\n').replace(/<[^>]*>?/gm, '').trim();
         }
       } 
       // Tenta extrair Padrão LETRAS.MUS
       else if (urlToScrape.includes('letras.mus.br')) {
-        const titleEl = doc.querySelector('h1.textTitle-subject');
-        const artistEl = doc.querySelector('h2.textTitle-signature a');
-        const lyricsContainers = doc.querySelectorAll('.lyric-original p');
+        // Deixamos a busca mais genérica para não falhar se eles mudarem as classes
+        const titleEl = doc.querySelector('h1.textTitle-subject') || doc.querySelector('h1');
+        const artistEl = doc.querySelector('h2.textTitle-signature a') || doc.querySelector('h2 a') || doc.querySelector('h2');
+        const lyricsContainers = doc.querySelectorAll('.lyric-original p, .lyric p');
 
         if (titleEl) title = titleEl.textContent || '';
         if (artistEl) artist = artistEl.textContent || '';
@@ -246,7 +251,7 @@ export class AddSongModalComponent implements OnChanges {
            lyrics = extractedText.trim();
         }
       } else {
-        alert('Site não suportado. Tente CifraClub ou Letras.mus.br');
+        alert('Site não suportado. Tente link do CifraClub ou Letras.mus.br');
         this.isScraping = false;
         return;
       }
@@ -258,12 +263,12 @@ export class AddSongModalComponent implements OnChanges {
         this.formData.lyrics = lyrics;
         this.scraperUrl = ''; // Limpa o campo após sucesso
       } else {
-        alert('Não foi possível extrair a letra deste link. O formato da página pode ter mudado.');
+        alert('Não foi possível encontrar a letra na página. O site de origem pode ter mudado de layout.');
       }
 
     } catch (error) {
       console.error(error);
-      alert('Erro na extração. Verifique sua conexão ou o link colado.');
+      alert('Erro na extração. O servidor proxy pode estar bloqueado temporariamente.');
     } finally {
       this.isScraping = false;
     }
