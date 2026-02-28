@@ -25,19 +25,45 @@ import { Song, SongService } from '../services/song.service';
             </div>
 
             @if (!songToEdit && !isImporting) {
-              <div class="px-6 pt-4 pb-0 space-y-3">
-                <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl text-sm text-blue-800 dark:text-blue-200 border border-blue-100 dark:border-blue-900/30">
+               <div class="px-6 pt-5 pb-2">
+                 <div class="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 p-4 rounded-xl border border-purple-100 dark:border-purple-800/30">
+                    <label class="flex items-center gap-2 text-sm font-bold text-purple-800 dark:text-purple-300 mb-2">
+                       <span class="material-symbols-outlined text-purple-600 dark:text-purple-400">auto_awesome</span> 
+                       Importação Rápida
+                    </label>
+                    <div class="flex gap-2">
+                      <input [(ngModel)]="scraperUrl" type="text" placeholder="Cole o link do CifraClub aqui..." 
+                             class="flex-1 rounded-lg bg-white dark:bg-black/30 border border-purple-200 dark:border-purple-800/50 px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-400 outline-none transition-all">
+                      <button (click)="extractFromUrl()" [disabled]="isScraping || !scraperUrl" 
+                              class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all disabled:opacity-50 flex items-center gap-1 shadow-sm">
+                         @if(isScraping) {
+                           <span class="material-symbols-outlined animate-spin text-[18px]">sync</span> Extraindo...
+                         } @else {
+                           <span class="material-symbols-outlined text-[18px]">download</span> Extrair
+                         }
+                      </button>
+                    </div>
+                    <p class="text-[10px] text-purple-600/70 dark:text-purple-400/70 mt-2 italic">O sistema puxará o nome, cantor e a letra automaticamente.</p>
+                 </div>
+               </div>
+            }
+
+            @if (!songToEdit && !isImporting) {
+              <div class="px-6 pt-2 pb-0 space-y-3">
+                <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl text-sm text-blue-800 dark:text-blue-200 border border-blue-100 dark:border-blue-900/30 hidden">
                   <strong>💡 Dica Inteligente:</strong><br>
                   Pode subir a planilha completa sempre!<br>
                   • Se a música já existir, o sistema <strong>atualiza</strong>.<br>
                   • Se for nova, o sistema <strong>adiciona</strong>.
                 </div>
 
-                <label class="flex items-center justify-center w-full px-4 py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl cursor-pointer hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/10 transition-all group">
-                  <div class="flex flex-col items-center">
-                    <span class="material-symbols-outlined text-gray-400 group-hover:text-green-600 mb-2 text-3xl">table_view</span>
-                    <span class="text-gray-600 dark:text-gray-300 group-hover:text-green-700 font-bold">Importar Planilha CSV</span>
-                    <span class="text-xs text-gray-400 mt-1">Excel, Google Sheets (.csv)</span>
+                <label class="flex items-center justify-center w-full px-4 py-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl cursor-pointer hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/10 transition-all group">
+                  <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-gray-400 group-hover:text-green-600 text-2xl">table_view</span>
+                    <div class="flex flex-col text-left">
+                       <span class="text-gray-600 dark:text-gray-300 group-hover:text-green-700 font-bold text-sm">Importar Planilha CSV</span>
+                       <span class="text-[10px] text-gray-400">Atualiza e Adiciona em Lote</span>
+                    </div>
                   </div>
                   <input type="file" class="hidden" accept=".csv,text/csv" (change)="onFileSelected($event)">
                 </label>
@@ -129,6 +155,10 @@ export class AddSongModalComponent implements OnChanges {
 
   isImporting = false;
   importStatus = '';
+  
+  // Variáveis do Extrator Mágico
+  scraperUrl = '';
+  isScraping = false;
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['songToEdit'] && this.songToEdit) {
@@ -141,6 +171,8 @@ export class AddSongModalComponent implements OnChanges {
   resetForm() {
     this.formData = { title: '', artist: '', key: '', lyrics: '', tags: '', youtubeUrl: '' };
     this.isImporting = false;
+    this.scraperUrl = '';
+    this.isScraping = false;
   }
 
   isValid() {
@@ -160,7 +192,83 @@ export class AddSongModalComponent implements OnChanges {
     return `https://www.letras.mus.br/?q=${query}`;
   }
 
-  // --- LÓGICA DE IMPORTAÇÃO CSV INTELIGENTE (SEM DUPLICATAS) ---
+  // --- ⚡ LÓGICA DO EXTRATOR MÁGICO VIA ALLORIGINS ⚡ ---
+  async extractFromUrl() {
+    if (!this.scraperUrl) return;
+    
+    this.isScraping = true;
+    const urlToScrape = this.scraperUrl.trim();
+
+    try {
+      // Usamos um Proxy gratuito para burlar o bloqueio de CORS do navegador
+      const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(urlToScrape)}`);
+      
+      if (!response.ok) throw new Error('Falha ao conectar no site');
+      
+      const data = await response.json();
+      const htmlString = data.contents;
+
+      // Cria um DOM virtual para ler o HTML
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlString, 'text/html');
+
+      let title = '';
+      let artist = '';
+      let lyrics = '';
+
+      // Tenta extrair Padrão CIFRACLUB
+      if (urlToScrape.includes('cifraclub.com.br')) {
+        const titleEl = doc.querySelector('h1.t1');
+        const artistEl = doc.querySelector('h2.t3 a');
+        const lyricsEl = doc.querySelector('.cifra_cnt pre');
+
+        if (titleEl) title = titleEl.textContent || '';
+        if (artistEl) artist = artistEl.textContent || '';
+        if (lyricsEl) {
+          // Remove os span de acordes mantendo a estrutura
+          lyricsEl.querySelectorAll('b').forEach(b => b.remove()); 
+          lyrics = lyricsEl.innerHTML.replace(/<br\s*[\/]?>/gi, '\n').replace(/<[^>]*>?/gm, '').trim();
+        }
+      } 
+      // Tenta extrair Padrão LETRAS.MUS
+      else if (urlToScrape.includes('letras.mus.br')) {
+        const titleEl = doc.querySelector('h1.textTitle-subject');
+        const artistEl = doc.querySelector('h2.textTitle-signature a');
+        const lyricsContainers = doc.querySelectorAll('.lyric-original p');
+
+        if (titleEl) title = titleEl.textContent || '';
+        if (artistEl) artist = artistEl.textContent || '';
+        if (lyricsContainers.length > 0) {
+           let extractedText = '';
+           lyricsContainers.forEach(p => {
+              extractedText += p.innerHTML.replace(/<br\s*[\/]?>/gi, '\n').replace(/<[^>]*>?/gm, '') + '\n\n';
+           });
+           lyrics = extractedText.trim();
+        }
+      } else {
+        alert('Site não suportado. Tente CifraClub ou Letras.mus.br');
+        this.isScraping = false;
+        return;
+      }
+
+      // Preenche o formulário se encontrou algo
+      if (title || lyrics) {
+        this.formData.title = title.trim();
+        this.formData.artist = artist.trim();
+        this.formData.lyrics = lyrics;
+        this.scraperUrl = ''; // Limpa o campo após sucesso
+      } else {
+        alert('Não foi possível extrair a letra deste link. O formato da página pode ter mudado.');
+      }
+
+    } catch (error) {
+      console.error(error);
+      alert('Erro na extração. Verifique sua conexão ou o link colado.');
+    } finally {
+      this.isScraping = false;
+    }
+  }
+
   onFileSelected(event: any) {
     const file = event.target.files[0];
     if (!file) return;
@@ -179,14 +287,12 @@ export class AddSongModalComponent implements OnChanges {
       let added = 0;
       let updated = 0;
 
-      // Pega a lista atual de músicas para comparar
       const currentSongs = this.songService.songs();
 
       for (let i = 0; i < lines.length; i++) {
         let line = lines[i].trim();
         if (!line) continue; 
 
-        // Separar por Ponto e Vírgula (;)
         const parts = line.split(';');
 
         if (parts.length >= 2) {
@@ -200,23 +306,17 @@ export class AddSongModalComponent implements OnChanges {
             }
 
             if (title && lyrics) {
-                // --- AQUI ESTÁ A INTELIGÊNCIA ANTI-DUPLICIDADE ---
-                
-                // Procura se já existe música com esse título (ignorando maiúsculas/minúsculas)
                 const existingSong = currentSongs.find(s => s.title.toLowerCase() === title.toLowerCase());
 
                 if (existingSong) {
-                    // SE EXISTE: ATUALIZA
                     this.importStatus = `Atualizando: ${title}`;
                     await this.songService.updateSong(existingSong.id, {
-                        title: title,   // Atualiza caso tenha corrigido maiusculas/minusculas
+                        title: title, 
                         artist: artist || existingSong.artist,
                         lyrics: lyrics,
-                        // Não mexe no tom, tags ou youtube se já existiam
                     });
                     updated++;
                 } else {
-                    // SE NÃO EXISTE: CRIA NOVA
                     this.importStatus = `Adicionando: ${title}`;
                     await this.songService.addSong({
                         title: title,
@@ -231,7 +331,6 @@ export class AddSongModalComponent implements OnChanges {
             }
         }
         
-        // Pausa pra não travar
         if (i % 20 === 0) await new Promise(r => setTimeout(r, 10));
       }
 
