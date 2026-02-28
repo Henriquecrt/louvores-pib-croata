@@ -64,21 +64,38 @@ import { ToastService } from '../../services/toast.service';
         </div>
       }
 
-      <div class="max-w-4xl mx-auto flex gap-4 mb-6 border-b border-gray-200 dark:border-white/10 pb-1">
-        <button (click)="viewMode.set('upcoming')" 
-                [class.text-primary]="viewMode() === 'upcoming'"
-                [class.border-b-2]="viewMode() === 'upcoming'"
-                [class.border-primary]="viewMode() === 'upcoming'"
-                class="pb-2 font-bold text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors flex items-center gap-2">
-          <span class="material-symbols-outlined text-lg">event_upcoming</span> Próximos Eventos
-        </button>
-        <button (click)="viewMode.set('history')" 
-                [class.text-primary]="viewMode() === 'history'"
-                [class.border-b-2]="viewMode() === 'history'"
-                [class.border-primary]="viewMode() === 'history'"
-                class="pb-2 font-bold text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors flex items-center gap-2">
-          <span class="material-symbols-outlined text-lg">history</span> Histórico
-        </button>
+      <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-gray-200 dark:border-white/10 pb-2">
+        
+        <div class="flex gap-4">
+          <button (click)="viewMode.set('upcoming'); searchDate.set('')" 
+                  [class.text-primary]="viewMode() === 'upcoming' && !searchDate()"
+                  [class.border-b-2]="viewMode() === 'upcoming' && !searchDate()"
+                  [class.border-primary]="viewMode() === 'upcoming' && !searchDate()"
+                  class="pb-2 font-bold text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors flex items-center gap-2">
+            <span class="material-symbols-outlined text-lg">event_upcoming</span> Próximos
+          </button>
+          <button (click)="viewMode.set('history'); searchDate.set('')" 
+                  [class.text-primary]="viewMode() === 'history' && !searchDate()"
+                  [class.border-b-2]="viewMode() === 'history' && !searchDate()"
+                  [class.border-primary]="viewMode() === 'history' && !searchDate()"
+                  class="pb-2 font-bold text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors flex items-center gap-2">
+            <span class="material-symbols-outlined text-lg">history</span> Histórico
+          </button>
+        </div>
+
+        <div class="relative w-full md:w-auto flex items-center">
+          <span class="material-symbols-outlined absolute left-3 text-gray-400 text-[18px] pointer-events-none">search</span>
+          <input type="date" 
+                 [value]="searchDate()" 
+                 (input)="onSearchDateChange($event)"
+                 class="pl-10 pr-10 py-2 w-full md:w-56 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a2e1a] text-sm font-medium text-gray-700 dark:text-gray-200 outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all"
+                 title="Buscar por data específica">
+          @if (searchDate()) {
+            <button (click)="searchDate.set('')" class="absolute right-2 text-gray-400 hover:text-red-500 transition-colors p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10" title="Limpar busca">
+              <span class="material-symbols-outlined text-[16px] block">close</span>
+            </button>
+          }
+        </div>
       </div>
 
       <div class="max-w-4xl mx-auto space-y-10">
@@ -102,11 +119,11 @@ import { ToastService } from '../../services/toast.service';
 
             <div class="grid gap-3">
               @for (culto of group.cultos; track culto.id) {
-                <div [class.opacity-60]="viewMode() === 'history'" class="group bg-white dark:bg-[#1a2e1a] p-5 rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm hover:shadow-md hover:border-primary/30 dark:hover:border-primary/30 transition-all flex justify-between items-center relative overflow-hidden">
+                <div [class.opacity-60]="viewMode() === 'history' && !searchDate()" class="group bg-white dark:bg-[#1a2e1a] p-5 rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm hover:shadow-md hover:border-primary/30 dark:hover:border-primary/30 transition-all flex justify-between items-center relative overflow-hidden">
                   <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-gray-100 dark:bg-white/5 group-hover:bg-primary transition-colors"></div>
                   <a [routerLink]="['/services', culto.id]" class="flex-1 cursor-pointer pl-4">
                     <div class="flex items-center gap-3 mb-1">
-                      <div class="flex items-center gap-1 font-bold text-sm px-2 py-0.5 rounded-md" [ngClass]="viewMode() === 'history' ? 'bg-gray-100 text-gray-500' : 'bg-primary/10 text-primary'">
+                      <div class="flex items-center gap-1 font-bold text-sm px-2 py-0.5 rounded-md" [ngClass]="(viewMode() === 'history' && !searchDate()) ? 'bg-gray-100 text-gray-500' : 'bg-primary/10 text-primary'">
                         <span class="material-symbols-outlined text-[16px]">calendar_today</span>
                         {{ getDay(culto.date) }}
                       </div>
@@ -141,13 +158,21 @@ import { ToastService } from '../../services/toast.service';
         } @empty {
           <div class="text-center py-20 bg-gray-50 dark:bg-white/5 rounded-3xl border-2 border-dashed border-gray-200 dark:border-white/10">
             <span class="material-symbols-outlined text-6xl text-gray-300 dark:text-gray-600 mb-4">
-              {{ viewMode() === 'history' ? 'history' : 'event_busy' }}
+              {{ searchDate() ? 'search_off' : (viewMode() === 'history' ? 'history' : 'event_busy') }}
             </span>
             <h3 class="text-xl font-bold text-gray-500 dark:text-gray-400">
-              {{ viewMode() === 'history' ? 'Nenhum culto no histórico' : 'Nenhum evento futuro agendado' }}
+              @if (searchDate()) {
+                Nenhum culto encontrado nesta data
+              } @else if (viewMode() === 'history') {
+                Nenhum culto no histórico
+              } @else {
+                Nenhum evento futuro agendado
+              }
             </h3>
-            @if (viewMode() === 'upcoming') {
+            @if (viewMode() === 'upcoming' && !searchDate()) {
               <p class="text-gray-400 text-sm mt-2">Use o formulário acima para planejar os próximos eventos.</p>
+            } @else if (searchDate()) {
+              <button (click)="searchDate.set('')" class="mt-4 text-primary font-bold hover:underline">Limpar Filtro</button>
             }
           </div>
         }
@@ -223,30 +248,36 @@ export class ServicesListComponent {
   printGroup = signal<any>(null);
   selectedVocals = signal<string[]>([]);
 
-  // 🧹 SINAL QUE CONTROLA AS ABAS (Por padrão mostra os próximos cultos)
   viewMode = signal<'upcoming' | 'history'>('upcoming');
+  
+  searchDate = signal<string>('');
 
   form = new FormGroup({
     title: new FormControl('', Validators.required),
     date: new FormControl(new Date().toISOString().split('T')[0], Validators.required)
   });
 
-  // 🧹 LÓGICA DA VASSOURA MÁGICA: Filtra os cultos antes de agrupar
+  onSearchDateChange(event: any) {
+    this.searchDate.set(event.target.value);
+  }
+
   groupedCultos = computed(() => {
     const allCultos = this.songService.cultos();
-    const todayStr = new Date().toISOString().split('T')[0]; // Pega a data de hoje YYYY-MM-DD
+    const todayStr = new Date().toISOString().split('T')[0];
     const mode = this.viewMode();
+    const dateFilter = this.searchDate();
 
-    // Filtra a lista inteira baseada na aba selecionada
     const filteredCultos = allCultos.filter(c => {
+      if (dateFilter) {
+        return c.date === dateFilter; 
+      }
       if (mode === 'upcoming') {
-        return c.date >= todayStr; // Cultos de hoje em diante
+        return c.date >= todayStr; 
       } else {
-        return c.date < todayStr;  // Cultos do passado
+        return c.date < todayStr;  
       }
     });
 
-    // O resto da função de agrupar por mês continua igualzinho!
     const groups: { [key: string]: any[] } = {};
     filteredCultos.forEach(c => {
       const monthKey = c.date.substring(0, 7); 
@@ -255,8 +286,7 @@ export class ServicesListComponent {
     });
     
     Object.keys(groups).forEach(key => {
-        // Na aba próximos, a ordem é do mais perto pro mais longe (Crescente). No histórico é invertido (Decrescente)
-        if (mode === 'upcoming') {
+        if (mode === 'upcoming' || dateFilter) {
           groups[key].sort((a, b) => a.date.localeCompare(b.date)); 
         } else {
           groups[key].sort((a, b) => b.date.localeCompare(a.date));
@@ -264,8 +294,7 @@ export class ServicesListComponent {
     });
 
     return Object.keys(groups).sort((a, b) => {
-        // Ordena os meses. Se for próximo culto, mostra o mês atual primeiro. Se for histórico, mostra o mais recente que passou.
-        return mode === 'upcoming' ? a.localeCompare(b) : b.localeCompare(a);
+        return (mode === 'upcoming' || dateFilter) ? a.localeCompare(b) : b.localeCompare(a);
       }).map(key => {
         const [year, month] = key.split('-');
         const dateObj = new Date(parseInt(year), parseInt(month) - 1, 1);
@@ -306,8 +335,8 @@ export class ServicesListComponent {
       this.form.reset({ date: new Date().toISOString().split('T')[0] });
       this.selectedVocals.set([]);
       
-      // Ao salvar um culto, joga o usuário para a aba de "Próximos Eventos" pra ele ver o que acabou de criar
       this.viewMode.set('upcoming');
+      this.searchDate.set(''); 
     }
   }
 
@@ -340,7 +369,6 @@ export class ServicesListComponent {
   }
   
   shareMonth(group: any) {
-    // 🛡️ VACINA WHATSAPP APLICADA AQUI TAMBÉM
     let text = `🗓️ *ESCALA DE ${group.monthLabel.toUpperCase()}*\n_PIB CROATÁ_\n\n🔗 *Acesse os detalhes no sistema:*\n${window.location.origin}\n`;
     const allSongs = this.songService.songs();
     group.cultos.forEach((culto: any) => {
