@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { SongService } from '../../services/song.service';
 import { AuthService } from '../../services/auth.service';
-import { ToastService } from '../../services/toast.service'; // <--- Importando o Toast
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-services-list',
@@ -21,7 +21,7 @@ import { ToastService } from '../../services/toast.service'; // <--- Importando 
       </div>
 
       @if (auth.currentUser()) {
-        <div class="max-w-4xl mx-auto bg-white dark:bg-[#1a2e1a] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-white/5 mb-12">
+        <div class="max-w-4xl mx-auto bg-white dark:bg-[#1a2e1a] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-white/5 mb-8">
           
           <h3 class="font-bold text-lg mb-4 text-gray-800 dark:text-gray-100 flex items-center gap-2">
             <span class="material-symbols-outlined text-primary">{{ editingId() ? 'edit_calendar' : 'add_circle' }}</span>
@@ -64,6 +64,23 @@ import { ToastService } from '../../services/toast.service'; // <--- Importando 
         </div>
       }
 
+      <div class="max-w-4xl mx-auto flex gap-4 mb-6 border-b border-gray-200 dark:border-white/10 pb-1">
+        <button (click)="viewMode.set('upcoming')" 
+                [class.text-primary]="viewMode() === 'upcoming'"
+                [class.border-b-2]="viewMode() === 'upcoming'"
+                [class.border-primary]="viewMode() === 'upcoming'"
+                class="pb-2 font-bold text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined text-lg">event_upcoming</span> Próximos Eventos
+        </button>
+        <button (click)="viewMode.set('history')" 
+                [class.text-primary]="viewMode() === 'history'"
+                [class.border-b-2]="viewMode() === 'history'"
+                [class.border-primary]="viewMode() === 'history'"
+                class="pb-2 font-bold text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined text-lg">history</span> Histórico
+        </button>
+      </div>
+
       <div class="max-w-4xl mx-auto space-y-10">
         @for (group of groupedCultos(); track group.monthYear) {
           <section class="animate-[fadeIn_0.5s_ease-out]">
@@ -73,10 +90,10 @@ import { ToastService } from '../../services/toast.service'; // <--- Importando 
                 <div class="h-px flex-1 bg-gray-200 dark:bg-white/10"></div>
               </div>
               <div class="flex gap-2 ml-4">
-                <button (click)="printMonth(group)" class="flex items-center gap-2 px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold rounded-lg shadow-sm transition-colors" title="Imprimir escala deste mês">
+                <button (click)="printMonth(group)" class="flex items-center gap-2 px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold rounded-lg shadow-sm transition-colors" title="Imprimir escala">
                   <span class="material-symbols-outlined text-[16px]">print</span>
                 </button>
-                <button (click)="shareMonth(group)" class="flex items-center gap-2 px-3 py-1.5 bg-[#25D366] hover:bg-[#128C7E] text-white text-xs font-bold rounded-lg shadow-sm transition-colors" title="Enviar escala completa deste mês no WhatsApp">
+                <button (click)="shareMonth(group)" class="flex items-center gap-2 px-3 py-1.5 bg-[#25D366] hover:bg-[#128C7E] text-white text-xs font-bold rounded-lg shadow-sm transition-colors" title="Enviar escala completa no WhatsApp">
                   <span class="material-symbols-outlined text-[16px]">share</span>
                   Escala
                 </button>
@@ -85,11 +102,11 @@ import { ToastService } from '../../services/toast.service'; // <--- Importando 
 
             <div class="grid gap-3">
               @for (culto of group.cultos; track culto.id) {
-                <div class="group bg-white dark:bg-[#1a2e1a] p-5 rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm hover:shadow-md hover:border-primary/30 dark:hover:border-primary/30 transition-all flex justify-between items-center relative overflow-hidden">
+                <div [class.opacity-60]="viewMode() === 'history'" class="group bg-white dark:bg-[#1a2e1a] p-5 rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm hover:shadow-md hover:border-primary/30 dark:hover:border-primary/30 transition-all flex justify-between items-center relative overflow-hidden">
                   <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-gray-100 dark:bg-white/5 group-hover:bg-primary transition-colors"></div>
                   <a [routerLink]="['/services', culto.id]" class="flex-1 cursor-pointer pl-4">
                     <div class="flex items-center gap-3 mb-1">
-                      <div class="flex items-center gap-1 text-primary font-bold text-sm bg-primary/10 px-2 py-0.5 rounded-md">
+                      <div class="flex items-center gap-1 font-bold text-sm px-2 py-0.5 rounded-md" [ngClass]="viewMode() === 'history' ? 'bg-gray-100 text-gray-500' : 'bg-primary/10 text-primary'">
                         <span class="material-symbols-outlined text-[16px]">calendar_today</span>
                         {{ getDay(culto.date) }}
                       </div>
@@ -105,7 +122,6 @@ import { ToastService } from '../../services/toast.service'; // <--- Importando 
                   
                   @if (auth.currentUser()) {
                     <div class="flex items-center gap-1 pl-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      
                       <button (click)="notifyShortcut(culto)" class="p-2 text-gray-300 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-full transition-colors" title="Notificar Igreja">
                         <span class="material-symbols-outlined">campaign</span>
                       </button>
@@ -124,9 +140,15 @@ import { ToastService } from '../../services/toast.service'; // <--- Importando 
           </section>
         } @empty {
           <div class="text-center py-20 bg-gray-50 dark:bg-white/5 rounded-3xl border-2 border-dashed border-gray-200 dark:border-white/10">
-            <span class="material-symbols-outlined text-6xl text-gray-300 dark:text-gray-600 mb-4">event_busy</span>
-            <h3 class="text-xl font-bold text-gray-500 dark:text-gray-400">Nenhum culto agendado</h3>
-            <p class="text-gray-400 text-sm mt-2">Use o formulário acima para criar o primeiro evento.</p>
+            <span class="material-symbols-outlined text-6xl text-gray-300 dark:text-gray-600 mb-4">
+              {{ viewMode() === 'history' ? 'history' : 'event_busy' }}
+            </span>
+            <h3 class="text-xl font-bold text-gray-500 dark:text-gray-400">
+              {{ viewMode() === 'history' ? 'Nenhum culto no histórico' : 'Nenhum evento futuro agendado' }}
+            </h3>
+            @if (viewMode() === 'upcoming') {
+              <p class="text-gray-400 text-sm mt-2">Use o formulário acima para planejar os próximos eventos.</p>
+            }
           </div>
         }
       </div>
@@ -195,29 +217,56 @@ import { ToastService } from '../../services/toast.service'; // <--- Importando 
 export class ServicesListComponent {
   songService = inject(SongService);
   auth = inject(AuthService);
-  toast = inject(ToastService); // <--- Injetado
+  toast = inject(ToastService);
   
   editingId = signal<string | null>(null);
   printGroup = signal<any>(null);
   selectedVocals = signal<string[]>([]);
+
+  // 🧹 SINAL QUE CONTROLA AS ABAS (Por padrão mostra os próximos cultos)
+  viewMode = signal<'upcoming' | 'history'>('upcoming');
 
   form = new FormGroup({
     title: new FormControl('', Validators.required),
     date: new FormControl(new Date().toISOString().split('T')[0], Validators.required)
   });
 
+  // 🧹 LÓGICA DA VASSOURA MÁGICA: Filtra os cultos antes de agrupar
   groupedCultos = computed(() => {
-    const cultos = this.songService.cultos();
+    const allCultos = this.songService.cultos();
+    const todayStr = new Date().toISOString().split('T')[0]; // Pega a data de hoje YYYY-MM-DD
+    const mode = this.viewMode();
+
+    // Filtra a lista inteira baseada na aba selecionada
+    const filteredCultos = allCultos.filter(c => {
+      if (mode === 'upcoming') {
+        return c.date >= todayStr; // Cultos de hoje em diante
+      } else {
+        return c.date < todayStr;  // Cultos do passado
+      }
+    });
+
+    // O resto da função de agrupar por mês continua igualzinho!
     const groups: { [key: string]: any[] } = {};
-    cultos.forEach(c => {
+    filteredCultos.forEach(c => {
       const monthKey = c.date.substring(0, 7); 
       if (!groups[monthKey]) { groups[monthKey] = []; }
       groups[monthKey].push(c);
     });
+    
     Object.keys(groups).forEach(key => {
-        groups[key].sort((a, b) => a.date.localeCompare(b.date));
+        // Na aba próximos, a ordem é do mais perto pro mais longe (Crescente). No histórico é invertido (Decrescente)
+        if (mode === 'upcoming') {
+          groups[key].sort((a, b) => a.date.localeCompare(b.date)); 
+        } else {
+          groups[key].sort((a, b) => b.date.localeCompare(a.date));
+        }
     });
-    return Object.keys(groups).sort((a, b) => b.localeCompare(a)).map(key => {
+
+    return Object.keys(groups).sort((a, b) => {
+        // Ordena os meses. Se for próximo culto, mostra o mês atual primeiro. Se for histórico, mostra o mais recente que passou.
+        return mode === 'upcoming' ? a.localeCompare(b) : b.localeCompare(a);
+      }).map(key => {
         const [year, month] = key.split('-');
         const dateObj = new Date(parseInt(year), parseInt(month) - 1, 1);
         return {
@@ -256,6 +305,9 @@ export class ServicesListComponent {
       });
       this.form.reset({ date: new Date().toISOString().split('T')[0] });
       this.selectedVocals.set([]);
+      
+      // Ao salvar um culto, joga o usuário para a aba de "Próximos Eventos" pra ele ver o que acabou de criar
+      this.viewMode.set('upcoming');
     }
   }
 
@@ -288,6 +340,7 @@ export class ServicesListComponent {
   }
   
   shareMonth(group: any) {
+    // 🛡️ VACINA WHATSAPP APLICADA AQUI TAMBÉM
     let text = `🗓️ *ESCALA DE ${group.monthLabel.toUpperCase()}*\n_PIB CROATÁ_\n\n🔗 *Acesse os detalhes no sistema:*\n${window.location.origin}\n`;
     const allSongs = this.songService.songs();
     group.cultos.forEach((culto: any) => {
@@ -311,15 +364,13 @@ export class ServicesListComponent {
             });
         }
     });
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
   }
 
-  // --- NOVA FUNÇÃO: NOTIFICAR ---
   notifyShortcut(culto: any) {
     const day = this.getDay(culto.date);
     const monthLabel = new Date(culto.date + 'T12:00:00').toLocaleDateString('pt-BR', { month: 'short' });
     
-    // Título e Corpo da Notificação
     const title = `Nova Escala: ${culto.title}`;
     const body = `📅 ${day} de ${monthLabel} - A lista de louvores já está no App. Confira!`;
     
@@ -327,7 +378,6 @@ export class ServicesListComponent {
 
     navigator.clipboard.writeText(textToCopy).then(() => {
       this.toast.show('Copiado! Cole no Firebase.', 'info');
-      // Abre o console do Firebase em outra aba
       window.open('https://console.firebase.google.com/project/louvores-gpv/messaging', '_blank');
     }).catch(err => {
       this.toast.show('Erro ao copiar.', 'error');
