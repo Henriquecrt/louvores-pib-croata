@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, NgZone, inject } from '@angular/core';
 import { collection, addDoc, doc, deleteDoc, updateDoc, onSnapshot, arrayUnion, arrayRemove, increment, setDoc } from 'firebase/firestore';
 import { db } from '../firebase-config';
 
@@ -41,6 +41,8 @@ export interface MemberStats {
   providedIn: 'root'
 })
 export class SongService {
+  private zone = inject(NgZone); // <--- INJETANDO A ZONA DO ANGULAR PARA ACORDAR A TELA
+
   readonly songs = signal<Song[]>([]);
   readonly cultos = signal<Culto[]>([]);
   
@@ -63,7 +65,11 @@ export class SongService {
     onSnapshot(songsCollection, { includeMetadataChanges: true }, (snapshot) => {
       const songsData: Song[] = [];
       snapshot.forEach((doc) => songsData.push({ id: doc.id, ...doc.data() } as Song));
-      this.songs.set(songsData.sort((a, b) => a.title.localeCompare(b.title)));
+      
+      // 👇 Garante que o Angular seja avisado na hora!
+      this.zone.run(() => {
+        this.songs.set(songsData.sort((a, b) => a.title.localeCompare(b.title)));
+      });
     }, (error) => console.error("Erro músicas:", error));
   }
 
@@ -100,7 +106,11 @@ export class SongService {
         }
         cultosData.push({ id: doc.id, ...data } as Culto);
       });
-      this.cultos.set(cultosData.sort((a, b) => b.date.localeCompare(a.date)));
+
+      // 👇 Garante que o Angular seja avisado na hora!
+      this.zone.run(() => {
+        this.cultos.set(cultosData.sort((a, b) => b.date.localeCompare(a.date)));
+      });
     }, (error) => console.error("Erro cultos:", error));
   }
 
@@ -128,7 +138,11 @@ export class SongService {
     onSnapshot(doc(db, 'settings', 'general'), (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
-        this.noticeMessage.set(data['notice'] || '');
+        
+        // 👇 Garante que o Angular seja avisado na hora!
+        this.zone.run(() => {
+          this.noticeMessage.set(data['notice'] || '');
+        });
       }
     });
   }
