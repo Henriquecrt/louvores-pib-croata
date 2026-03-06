@@ -5,12 +5,15 @@ import { filter } from 'rxjs';
 import { ToastComponent } from './components/toast.component'; 
 import { NotificationService } from './services/notification.service'; 
 import { InstallPromptComponent } from './components/install-prompt.component'; // <--- Nosso novo componente importado
+import { AlertBannerComponent } from './components/alert-banner.component'; // <--- Importação do novo Banner
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, ToastComponent, InstallPromptComponent], // <--- Adicionado aos imports
+  imports: [RouterOutlet, ToastComponent, InstallPromptComponent, AlertBannerComponent], // <--- Banner adicionado aos imports
   template: `
+    <app-alert-banner></app-alert-banner>
+
     <app-toast></app-toast> 
     
     <router-outlet></router-outlet>

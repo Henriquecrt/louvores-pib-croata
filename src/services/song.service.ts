@@ -37,6 +37,14 @@ export interface MemberStats {
   firstServiceDate: string | null;
 }
 
+// 👇 NOVA INTERFACE: Para o Banner de Alerta
+export interface TopAlert {
+  active: boolean;
+  message: string;
+  buttonText: string;
+  link: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -48,6 +56,9 @@ export class SongService {
   
   // 👇 NOVO SINAL: O texto do Mural de Avisos
   readonly noticeMessage = signal<string>('');
+
+  // 👇 NOVO SINAL: O Banner do Topo
+  readonly topAlert = signal<TopAlert | null>(null);
 
   readonly vocalTeam = signal<string[]>([
     'Ana Laura', 'Aparecida', 'Rebeca', 'Coral MCM', 'Sophia', 'Samantha', 'Linéia'
@@ -132,7 +143,7 @@ export class SongService {
     await deleteDoc(doc(db, 'services', id));
   }
 
-  // --- MURAL DE AVISOS (NOVO 📌) ---
+  // --- MURAL DE AVISOS (NOVO 📌) E BANNER ---
   private listenToNotice() {
     // Vamos salvar o aviso numa coleção separada chamada 'settings'
     onSnapshot(doc(db, 'settings', 'general'), (docSnap) => {
@@ -142,6 +153,18 @@ export class SongService {
         // 👇 Garante que o Angular seja avisado na hora!
         this.zone.run(() => {
           this.noticeMessage.set(data['notice'] || '');
+
+          // 👇 Atualiza o Banner de Alerta na tela
+          if (data['alertActive']) {
+            this.topAlert.set({
+              active: data['alertActive'],
+              message: data['alertMessage'] || 'Novo aviso!',
+              buttonText: data['alertButtonText'] || 'Confira',
+              link: data['alertLink'] || '/'
+            });
+          } else {
+            this.topAlert.set(null);
+          }
         });
       }
     });
@@ -150,6 +173,16 @@ export class SongService {
   async updateNoticeMessage(message: string) {
     // Usa setDoc com merge para criar se não existir
     await setDoc(doc(db, 'settings', 'general'), { notice: message }, { merge: true });
+  }
+
+  // 👇 NOVA FUNÇÃO: Para você ligar/desligar o Banner
+  async updateTopAlert(active: boolean, message: string = '', buttonText: string = '', link: string = '') {
+    await setDoc(doc(db, 'settings', 'general'), { 
+      alertActive: active,
+      alertMessage: message,
+      alertButtonText: buttonText,
+      alertLink: link
+    }, { merge: true });
   }
 
   // --- ESTATÍSTICAS DA EQUIPE (NOVO 📊) ---
