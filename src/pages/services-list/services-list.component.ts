@@ -5,11 +5,12 @@ import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angula
 import { SongService } from '../../services/song.service';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
+import { AlertControlComponent } from '../../components/alert-control.component'; // <--- Importação do Painel
 
 @Component({
   selector: 'app-services-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, ReactiveFormsModule],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule, AlertControlComponent], // <--- Adicionado aos imports
   template: `
     <div class="min-h-screen bg-background-light dark:bg-background-dark p-6 pb-20 font-display no-print">
       <div class="max-w-4xl mx-auto flex justify-between items-center mb-8">
@@ -61,6 +62,10 @@ import { ToastService } from '../../services/toast.service';
               </button>
             </div>
           </form>
+        </div>
+
+        <div class="max-w-4xl mx-auto mb-8">
+          <app-alert-control></app-alert-control>
         </div>
       }
 
