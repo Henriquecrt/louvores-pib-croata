@@ -61,7 +61,7 @@ export class SongService {
   readonly topAlert = signal<TopAlert | null>(null);
 
   readonly vocalTeam = signal<string[]>([
-    'Ana Laura', 'Aparecida', 'Rebeca', 'Coral MCM', 'Sophia', 'Samantha', 'Linéia'
+    'Ana Laura', 'Aparecida', 'Rebeca', 'Coral MB', 'Sophia', 'Samantha', 'Linéia',"Beatriz"
   ]);
 
   constructor() {
