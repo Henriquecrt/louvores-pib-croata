@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { SongService, Song, Culto } from '../../services/song.service';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../services/toast.service'; // <--- Adicionado para os avisos na tela
 import { AddSongModalComponent } from '../../components/add-song-modal.component';
 
 @Component({
@@ -46,6 +47,10 @@ import { AddSongModalComponent } from '../../components/add-song-modal.component
                 </button>
                 <button (click)="shareOnWhatsApp()" class="flex items-center gap-2 px-4 py-2 bg-[#25D366] hover:bg-[#128C7E] text-white font-bold rounded-xl shadow-lg transition-colors duration-200 text-sm">
                   <span class="material-symbols-outlined text-[20px]">share</span> WhatsApp
+                </button>
+                
+                <button (click)="exportForMedia()" class="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-xl shadow-lg transition-colors duration-200 text-sm" title="Copiar lista para o Holyrics">
+                  <span class="material-symbols-outlined text-[20px]">desktop_windows</span> Mídia
                 </button>
               </div>
             </div>
@@ -301,6 +306,7 @@ export class ServiceDetailComponent {
   songService = inject(SongService); 
   private sanitizer = inject(DomSanitizer);
   auth = inject(AuthService);
+  toast = inject(ToastService); // <--- Injeção adicionada para mensagens
   
   cultoId = signal<string>('');
   searchTerm = signal('');
@@ -464,6 +470,33 @@ export class ServiceDetailComponent {
     
     text += `______________________________\n*Acompanhe a cifra e a letra aqui:*\n${window.location.href}`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+  }
+
+  // 👇 NOVA FUNÇÃO: Copiar para Mídia 👇
+  exportForMedia() {
+    const currentCulto = this.culto();
+    const songs = this.songsInCulto();
+    
+    if (!currentCulto || songs.length === 0) {
+      this.toast.show('Nenhuma música neste culto para exportar.', 'error');
+      return;
+    }
+
+    let exportText = `🖥️ *PLAYLIST PARA A MÍDIA*\n`;
+    exportText += `Culto: ${currentCulto.title}\n`;
+    exportText += `〰️〰️〰️〰️〰️〰️〰️〰️\n\n`;
+
+    songs.forEach((item, index) => {
+      exportText += `${index + 1}. ${item.song.title} - ${item.song.artist}\n`;
+    });
+
+    exportText += `\n_Copiado direto do App da PIB Croatá_`;
+
+    navigator.clipboard.writeText(exportText).then(() => {
+      this.toast.show('Lista copiada! É só colar no Holyrics ou WhatsApp.', 'info');
+    }).catch(err => {
+      this.toast.show('Erro ao copiar a lista.', 'error');
+    });
   }
 
   getSafeUrl(url: string | undefined): SafeResourceUrl | null {
