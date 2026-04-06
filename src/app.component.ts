@@ -6,6 +6,7 @@ import { ToastComponent } from './components/toast.component';
 import { NotificationService } from './services/notification.service'; 
 import { InstallPromptComponent } from './components/install-prompt.component'; // <--- Nosso novo componente importado
 import { AlertBannerComponent } from './components/alert-banner.component'; // <--- Importação do novo Banner
+import { WakeLockService } from './services/wake-lock.service'; // <--- NOVA IMPORTAÇÃO DO MODO PALCO
 
 @Component({
   selector: 'app-root',
@@ -25,6 +26,7 @@ import { AlertBannerComponent } from './components/alert-banner.component'; // <
 export class AppComponent implements OnInit {
   notificationService = inject(NotificationService);
   updates = inject(SwUpdate); // <--- Injeção do serviço de atualização
+  wakeLock = inject(WakeLockService); // <--- INJEÇÃO DO MODO PALCO (O robô já começa a rodar aqui!)
 
   ngOnInit() {
     // Verifica se o Service Worker (PWA) está ativo no navegador
